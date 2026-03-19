@@ -1,0 +1,237 @@
+{
+  "id": "1",
+  "name": "Main Monitoring Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "url": "http://sensor-simulator:8001/sensors/latest",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "get-sensors",
+      "name": "GET Sensors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [250, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n splits the array response into individual items.\n// Aggregate all sensor readings back into a single item for the agent.\nconst allItems = $input.all();\nconst sensors = allItems.map(item => item.json);\n\n// Also push each sensor reading to the dashboard\nfor (const sensor of sensors) {\n  try {\n    await fetch('http://dashboard-api:8003/events', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({\n        event_type: 'sensor_reading',\n        data: sensor,\n        equipment_id: sensor.equipment_id,\n        severity: sensor.status === 'critical' ? 'critical' : sensor.status === 'warning' ? 'warning' : null\n      })\n    });\n  } catch (e) {\n    // Don't fail the workflow if dashboard push fails\n  }\n}\n\nreturn [{ json: { sensors } }];\n"
+      },
+      "id": "aggregate-sensors",
+      "name": "Aggregate Sensors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://llm-agent:8002/agent/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sensors: $json.sensors }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "post-to-agent",
+      "name": "POST to Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Push the full agent analysis to the dashboard\nconst analysis = $input.first().json;\n\ntry {\n  await fetch('http://dashboard-api:8003/events', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      event_type: 'agent_analysis',\n      data: analysis,\n      severity: (analysis.anomalies && analysis.anomalies.length > 0)\n        ? (analysis.anomalies.some(a => a.severity === 'critical') ? 'critical' : 'warning')\n        : null\n    })\n  });\n} catch (e) {\n  // Don't fail if dashboard push fails\n}\n\nreturn [{ json: analysis }];\n"
+      },
+      "id": "push-analysis",
+      "name": "Push Analysis to Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-actions-exist",
+              "leftValue": "={{ $json.actions }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-for-actions",
+      "name": "Check for Actions",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split the actions array into individual items\nconst analysis = $input.first().json;\nconst actions = analysis.actions || [];\nreturn actions.map(action => ({ json: action }));\n"
+      },
+      "id": "split-actions",
+      "name": "Split Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://sensor-simulator:8001/actions/execute",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ equipment_id: $json.equipment_id, action: $json.action, parameters: $json.parameters || {}, reason: $json.reason || '' }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "execute-actions",
+      "name": "Execute Actions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1750, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Push each executed action to the dashboard\nconst items = $input.all();\n\nfor (const item of items) {\n  const result = item.json;\n  try {\n    await fetch('http://dashboard-api:8003/events', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({\n        event_type: 'action_executed',\n        data: result,\n        equipment_id: result.equipment_id,\n        severity: result.action === 'shutdown_equipment' ? 'critical' : 'warning'\n      })\n    });\n  } catch (e) {\n    // Don't fail if dashboard push fails\n  }\n}\n\nreturn items;\n"
+      },
+      "id": "push-action-events",
+      "name": "Push Actions to Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, -100]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "GET Sensors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Sensors": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Sensors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Sensors": {
+      "main": [
+        [
+          {
+            "node": "POST to Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST to Agent": {
+      "main": [
+        [
+          {
+            "node": "Push Analysis to Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Push Analysis to Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Check for Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Actions": {
+      "main": [
+        [
+          {
+            "node": "Split Actions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Split Actions": {
+      "main": [
+        [
+          {
+            "node": "Execute Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Actions": {
+      "main": [
+        [
+          {
+            "node": "Push Actions to Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "active": true
+}

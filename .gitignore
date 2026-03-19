@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.idea/
+__pycache__/
+*.pyc
+.env
+.vite/
+.claude/

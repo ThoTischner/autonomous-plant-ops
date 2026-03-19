@@ -1,0 +1,167 @@
+{
+  "id": "2",
+  "name": "Alert Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "alert",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "alert-escalation-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-severity-critical",
+              "leftValue": "={{ $json.body.severity }}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-severity",
+      "name": "Check Severity",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [300, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $input.first().json.body;\n\nconsole.log('=== CRITICAL ALERT ===');\nconsole.log(`Timestamp: ${new Date().toISOString()}`);\nconsole.log(`Source: ${alert.source || 'unknown'}`);\nconsole.log(`Severity: ${alert.severity}`);\nconsole.log(`Message: ${alert.message || 'No message provided'}`);\nconsole.log(`Sensor Data:`, JSON.stringify(alert.sensor_data || {}, null, 2));\nconsole.log('======================');\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    type: 'critical_alert',\n    severity: 'critical',\n    source: alert.source || 'unknown',\n    message: alert.message || 'No message provided',\n    sensor_data: alert.sensor_data || {},\n    original_alert: alert\n  }\n}];\n"
+      },
+      "id": "log-critical-alert",
+      "name": "Log Critical Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://dashboard-api:8003/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "push-to-dashboard",
+      "name": "Push to Dashboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'received', escalated: true }) }}",
+        "options": {}
+      },
+      "id": "respond-critical",
+      "name": "Respond Critical",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'received', escalated: false, reason: 'severity not critical' }) }}",
+        "options": {}
+      },
+      "id": "respond-non-critical",
+      "name": "Respond Non-Critical",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [600, 150]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Severity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Severity": {
+      "main": [
+        [
+          {
+            "node": "Log Critical Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Non-Critical",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Critical Alert": {
+      "main": [
+        [
+          {
+            "node": "Push to Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Push to Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Respond Critical",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "alerting"
+    },
+    {
+      "name": "autonomous-plant-ops"
+    }
+  ],
+  "triggerCount": 1,
+  "active": true
+}

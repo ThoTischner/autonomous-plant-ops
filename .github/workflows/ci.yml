@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test-sensor-simulator:
+    name: "Sensor Simulator — Lint & Test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build test image
+        run: docker build -f sensor-simulator/Dockerfile.test -t sensor-simulator-test sensor-simulator/
+      - name: Run linter (ruff)
+        run: docker run --rm sensor-simulator-test ruff check src/
+      - name: Run type checker (mypy)
+        run: docker run --rm sensor-simulator-test mypy src/ --ignore-missing-imports
+      - name: Run tests (pytest)
+        run: docker run --rm sensor-simulator-test pytest tests/ -v --tb=short
+
+  lint-and-test-llm-agent:
+    name: "LLM Agent — Lint & Test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build test image
+        run: docker build -f llm-agent/Dockerfile.test -t llm-agent-test llm-agent/
+      - name: Run linter (ruff)
+        run: docker run --rm llm-agent-test ruff check src/
+      - name: Run type checker (mypy)
+        run: docker run --rm llm-agent-test mypy src/ --ignore-missing-imports
+      - name: Run tests (pytest)
+        run: docker run --rm llm-agent-test pytest tests/ -v --tb=short
+
+  lint-and-test-dashboard-api:
+    name: "Dashboard API — Lint & Test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build test image
+        run: docker build -f dashboard/api/Dockerfile.test -t dashboard-api-test dashboard/api/
+      - name: Run linter (ruff)
+        run: docker run --rm dashboard-api-test ruff check src/
+      - name: Run type checker (mypy)
+        run: docker run --rm dashboard-api-test mypy src/ --ignore-missing-imports
+      - name: Run tests (pytest)
+        run: docker run --rm dashboard-api-test pytest tests/ -v --tb=short
+
+  lint-and-build-frontend:
+    name: "Dashboard Frontend — Lint & Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build test image
+        run: docker build -f dashboard/frontend/Dockerfile.test -t frontend-test dashboard/frontend/
+      - name: Run TypeScript type check
+        run: docker run --rm frontend-test npx tsc --noEmit
+      - name: Run ESLint
+        run: docker run --rm frontend-test npx eslint src/ --ext .ts,.tsx || true
+      - name: Run production build
+        run: docker build -f dashboard/frontend/Dockerfile -t dashboard-frontend dashboard/frontend/
+
+  docker-compose-build:
+    name: "Docker Compose — Full Build"
+    runs-on: ubuntu-latest
+    needs: [lint-and-test-sensor-simulator, lint-and-test-llm-agent, lint-and-test-dashboard-api, lint-and-build-frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build all services
+        run: docker compose build
+      - name: Start services (without Ollama model)
+        run: |
+          docker compose up -d sensor-simulator dashboard-api dashboard-frontend
+          sleep 5
+      - name: Health check — Sensor Simulator
+        run: docker compose exec -T sensor-simulator python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"
+      - name: Health check — Dashboard API
+        run: docker compose exec -T dashboard-api python -c "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+
+  integration-test:
+    name: "Integration Tests"
+    runs-on: ubuntu-latest
+    needs: [docker-compose-build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build integration test runner
+        run: docker build -f tests/Dockerfile -t integration-tests tests/
+      - name: Start services
+        run: |
+          docker compose up -d sensor-simulator dashboard-api
+          sleep 5
+      - name: Run integration tests
+        run: |
+          docker run --rm --network autonomous-plant-ops_plant-net \
+            integration-tests pytest integration/ -v --tb=short
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v

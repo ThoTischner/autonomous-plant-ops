@@ -1,0 +1,48 @@
+# Usage: docker compose -f docker-compose.yml -f docker-compose.test.yml up --build --abort-on-container-exit
+services:
+  sensor-simulator-test:
+    build:
+      context: ./sensor-simulator
+      dockerfile: Dockerfile.test
+    command: pytest tests/ -v --tb=short
+    networks:
+      - plant-net
+
+  llm-agent-test:
+    build:
+      context: ./llm-agent
+      dockerfile: Dockerfile.test
+    command: pytest tests/ -v --tb=short
+    networks:
+      - plant-net
+
+  dashboard-api-test:
+    build:
+      context: ./dashboard/api
+      dockerfile: Dockerfile.test
+    command: pytest tests/ -v --tb=short
+    networks:
+      - plant-net
+
+  frontend-test:
+    build:
+      context: ./dashboard/frontend
+      dockerfile: Dockerfile.test
+    command: npx tsc --noEmit
+    networks:
+      - plant-net
+
+  integration-test:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile
+    depends_on:
+      - sensor-simulator
+      - dashboard-api
+    command: pytest integration/ -v --tb=short
+    networks:
+      - plant-net
+
+networks:
+  plant-net:
+    driver: bridge
