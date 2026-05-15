@@ -5,7 +5,7 @@ import pytest
 from src import equipment as eq
 from src.simulator import simulator
 
-DEFAULT_IDS = {"P-101", "R-201", "C-301", "FL-401", "TR-501", "AGV-601"}
+DEFAULT_IDS = {"FL-401", "FL-402", "TR-501", "AGV-601"}
 
 NEW = {
     "equipment_id": "T-900",

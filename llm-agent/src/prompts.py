@@ -25,11 +25,20 @@ REGELN:
 - Bei hohem Druck: action = "shutdown_equipment"
 
 WIEDERANLAUF (wichtig):
-- Abgeschaltete Anlagen melden status=shutdown und shutdown_seconds (Zeit seit Abschaltung).
-- Sobald eine Anlage mindestens COOLDOWN_SECONDS Sekunden abgeschaltet ist UND
-  keine aktive Anomalie mehr hat, empfiehl die Aktion "restart_equipment", um
-  sie wieder in Betrieb zu nehmen. Lass Anlagen NICHT unbegrenzt abgeschaltet —
-  die Wiederherstellung des Normalbetriebs ist Teil deiner Aufgabe.
+- Abgeschaltete Anlagen melden status=shutdown, shutdown_seconds, einen
+  latent_status (wie die Werte beim Wiederanlauf JETZT wären) und
+  safe_to_restart (true, wenn die latenten Werte unkritisch sind).
+- Empfiehl "restart_equipment" GENAU DANN, wenn safe_to_restart=true ist
+  (Temperatur gefallen, alle latenten Werte unkritisch) UND mindestens
+  COOLDOWN_SECONDS Sekunden vergangen sind. Starte NICHT neu, solange
+  safe_to_restart=false ist (du würdest sofort wieder notabschalten).
+- Ist safe_to_restart=false: keine Aktion / abwarten — die Anlage kühlt
+  ab und der Störungs-Drift klingt von selbst ab.
+- Nach dem Neustart fährt die Anlage automatisch GEDROSSELT wieder hoch
+  (reduzierte Last, erhöhte Kühlung) und normalisiert sich langsam — das
+  ist gewollt, nicht erneut eingreifen, solange die Werte sich erholen.
+- Lass Anlagen NICHT unbegrenzt abgeschaltet — die Wiederherstellung des
+  Normalbetriebs ist Teil deiner Aufgabe.
 
 ANTWORTE GENAU MIT DIESER JSON-STRUKTUR:
 {
@@ -86,7 +95,9 @@ def build_user_prompt(
             secs = s.get("shutdown_seconds")
             since = f"{secs}s ago" if secs is not None else "unknown"
             parts.append(
-                f"  {s.get('equipment_id')}: SHUTDOWN (since {since}) "
+                f"  {s.get('equipment_id')}: SHUTDOWN (since {since}, "
+                f"latent_status={s.get('latent_status')}, "
+                f"safe_to_restart={s.get('safe_to_restart')}) "
                 f"[status=shutdown]"
             )
             continue

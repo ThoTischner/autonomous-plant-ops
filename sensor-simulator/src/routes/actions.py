@@ -35,18 +35,25 @@ async def execute_action(req: ActionRequest):
             msg = f"{cfg.name} shut down"
 
         case ActionType.RESTART_EQUIPMENT:
+            # Throttled restart: back online but at reduced load with extra
+            # cooling; the simulator ramps these back to nominal over time.
             cfg.reset()
             simulator.reset_drift(req.equipment_id)
-            msg = f"{cfg.name} restarted — back to normal operation"
+            cfg.is_shutdown = False
+            cfg.shutdown_at = None
+            cfg.speed_factor = 0.5
+            cfg.cooling_factor = 1.6
+            msg = f"{cfg.name} wird gedrosselt wieder hochgefahren"
 
         case ActionType.INCREASE_COOLING:
             cfg.cooling_factor = min(cfg.cooling_factor + 0.2, 2.0)
-            simulator.add_drift(req.equipment_id, "temperature", -5.0)
+            # Actively pull the temperature excursion back down.
+            simulator.damp_drift(req.equipment_id, "temperature", 0.45)
             msg = f"{cfg.name} cooling increased (factor={cfg.cooling_factor:.1f})"
 
         case ActionType.REDUCE_SPEED:
             cfg.speed_factor = max(cfg.speed_factor - 0.15, 0.3)
-            simulator.add_drift(req.equipment_id, "vibration", -1.0)
+            simulator.damp_drift(req.equipment_id, "vibration", 0.45)
             msg = f"{cfg.name} speed reduced (factor={cfg.speed_factor:.2f})"
 
         case ActionType.ADJUST_SETPOINT:

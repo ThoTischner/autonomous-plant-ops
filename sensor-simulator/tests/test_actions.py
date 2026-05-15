@@ -15,14 +15,14 @@ def _reset_equipment():
 
 async def test_shutdown_equipment(client):
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "P-101",
+        "equipment_id": "FL-401",
         "action": "shutdown_equipment",
         "reason": "Emergency shutdown test",
     })
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
-    assert body["equipment_id"] == "P-101"
+    assert body["equipment_id"] == "FL-401"
     assert body["action"] == "shutdown_equipment"
     assert "shut down" in body["message"].lower()
 
@@ -30,7 +30,7 @@ async def test_shutdown_equipment(client):
 
 async def test_increase_cooling(client):
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "R-201",
+        "equipment_id": "AGV-601",
         "action": "increase_cooling",
         "reason": "Temperature rising",
     })
@@ -44,7 +44,7 @@ async def test_increase_cooling(client):
 
 async def test_reduce_speed(client):
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "C-301",
+        "equipment_id": "TR-501",
         "action": "reduce_speed",
         "reason": "High vibration",
     })
@@ -58,7 +58,7 @@ async def test_reduce_speed(client):
 
 async def test_adjust_setpoint(client):
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "P-101",
+        "equipment_id": "FL-401",
         "action": "adjust_setpoint",
         "reason": "Resetting to normal",
     })
@@ -72,7 +72,7 @@ async def test_adjust_setpoint(client):
 
 async def test_no_action(client):
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "R-201",
+        "equipment_id": "AGV-601",
         "action": "no_action",
         "reason": "All nominal",
     })
@@ -85,7 +85,7 @@ async def test_no_action(client):
 
 async def test_alert_operator(client):
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "P-101",
+        "equipment_id": "FL-401",
         "action": "alert_operator",
         "reason": "Bearing wear detected",
     })
@@ -112,7 +112,7 @@ async def test_unknown_equipment(client):
 
 async def test_action_response_has_timestamp(client):
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "P-101",
+        "equipment_id": "FL-401",
         "action": "no_action",
         "reason": "",
     })
@@ -123,16 +123,16 @@ async def test_action_response_has_timestamp(client):
 
 async def test_restart_equipment_clears_shutdown(client):
     await client.post("/actions/execute", json={
-        "equipment_id": "R-201", "action": "shutdown_equipment", "reason": "test",
+        "equipment_id": "AGV-601", "action": "shutdown_equipment", "reason": "test",
     })
-    assert EQUIPMENT["R-201"].is_shutdown is True
+    assert EQUIPMENT["AGV-601"].is_shutdown is True
 
     resp = await client.post("/actions/execute", json={
-        "equipment_id": "R-201", "action": "restart_equipment", "reason": "safe again",
+        "equipment_id": "AGV-601", "action": "restart_equipment", "reason": "safe again",
     })
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
     assert body["action"] == "restart_equipment"
-    assert EQUIPMENT["R-201"].is_shutdown is False
-    assert EQUIPMENT["R-201"].shutdown_at is None
+    assert EQUIPMENT["AGV-601"].is_shutdown is False
+    assert EQUIPMENT["AGV-601"].shutdown_at is None

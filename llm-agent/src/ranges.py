@@ -14,13 +14,9 @@ _TTL = 15.0
 _cache: dict = {"t": 0.0, "text": ""}
 
 _FALLBACK = (
-    "- P-101 (pump): temperature 60-80°C, pressure 2-4 bar, "
-    "vibration 0-5 mm/s, flow 100-150 L/min\n"
-    "- R-201 (reactor): temperature 150-200°C, pressure 5-10 bar, "
-    "vibration 0-3 mm/s\n"
-    "- C-301 (compressor): temperature 40-70°C, pressure 6-12 bar, "
-    "vibration 0-8 mm/s, flow 200-300 m³/h\n"
     "- FL-401 (forklift): temperature 40-90°C, pressure 5-15 bar, "
+    "vibration 0-6 mm/s, flow 10-40 L/min\n"
+    "- FL-402 (forklift): temperature 40-90°C, pressure 5-15 bar, "
     "vibration 0-6 mm/s, flow 10-40 L/min\n"
     "- TR-501 (truck): temperature 70-105°C, pressure 2-6 bar, "
     "vibration 0-4 mm/s, flow 5-30 L/h\n"
