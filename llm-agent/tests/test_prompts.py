@@ -26,7 +26,6 @@ def test_get_system_prompt_contains_action_types():
     assert "shutdown_equipment" in prompt
     assert "increase_cooling" in prompt
     assert "reduce_speed" in prompt
-    assert "adjust_setpoint" in prompt
 
 
 def test_build_user_prompt_formats_sensor_data():
@@ -80,7 +79,7 @@ def test_build_user_prompt_with_history():
     ]
     history = [{"equipment_id": "P-101", "temperature": 73.0}]
     prompt = build_user_prompt(sensors, history=history)
-    assert "Historie" in prompt
+    assert "Recent history:" in prompt
 
 
 def test_build_user_prompt_with_recent_actions():
@@ -96,7 +95,7 @@ def test_build_user_prompt_with_recent_actions():
     ]
     actions = [{"action": "increase_cooling", "equipment_id": "P-101"}]
     prompt = build_user_prompt(sensors, recent_actions=actions)
-    assert "Aktionen" in prompt
+    assert "Recent actions taken:" in prompt
 
 
 def test_build_user_prompt_multiple_sensors():

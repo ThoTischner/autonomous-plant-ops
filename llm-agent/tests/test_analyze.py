@@ -104,7 +104,7 @@ async def test_analyze_handles_llm_failure(client):
     body = resp.json()
     assert body["anomalies"] == []
     assert body["actions"] == []
-    assert "Failed" in body["reasoning"] or "failed" in body["reasoning"].lower()
+    assert "error" in body["reasoning"].lower()
 
 
 
