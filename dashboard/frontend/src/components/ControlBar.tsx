@@ -4,10 +4,10 @@ import EquipmentModal from './EquipmentModal'
 const API = '/api'
 
 const SCENARIO_LABELS: Record<string, string> = {
-  thermal_runaway: 'Thermal Runaway',
-  bearing_degradation: 'Bearing Degradation',
-  compressor_surge: 'Compressor Surge',
-  pressure_spike: 'Pressure Spike',
+  thermal_runaway: 'Thermisches Durchgehen',
+  bearing_degradation: 'Lagerverschleiß',
+  compressor_surge: 'Verdichterpumpen',
+  pressure_spike: 'Druckspitze',
 }
 
 export default function ControlBar() {
@@ -138,7 +138,7 @@ export default function ControlBar() {
         className="px-2.5 py-1 text-xs rounded-md bg-plant-card border border-plant-border
                    hover:border-plant-accent hover:text-plant-accent transition-colors"
       >
-        Equipment
+        Anlagen
       </button>
 
       <button
@@ -154,7 +154,7 @@ export default function ControlBar() {
                       : 'bg-plant-warning/20 text-plant-warning'
           }`}
         >
-          {isDefault ? 'Default' : 'Angepasst'}
+          {isDefault ? 'Standard' : 'Angepasst'}
         </span>
       </button>
 
@@ -177,7 +177,7 @@ export default function ControlBar() {
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-gray-200 uppercase tracking-wider">
-                System-Prompt des AI-Agenten
+                System-Prompt des KI-Agenten
               </h2>
               <button
                 onClick={() => setPromptOpen(false)}
@@ -215,7 +215,7 @@ export default function ControlBar() {
                            border border-plant-border text-gray-400
                            hover:text-white disabled:opacity-40 transition-colors"
               >
-                Default
+                Standard
               </button>
               <span className="ml-auto self-center text-[11px] text-gray-500">
                 {isDefault ? 'Standard-Prompt aktiv' : 'Angepasster Prompt aktiv'}

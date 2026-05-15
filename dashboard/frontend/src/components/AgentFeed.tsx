@@ -32,7 +32,7 @@ export default function AgentFeed({ analyses }: Props) {
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-plant-accent animate-pulse" />
           <h2 className="text-base font-bold text-white uppercase tracking-wider">
-            AI Agent Feed
+            KI-Agent-Feed
           </h2>
         </div>
         <p className="text-[11px] text-gray-500 mt-0.5 ml-[18px]">
@@ -43,7 +43,7 @@ export default function AgentFeed({ analyses }: Props) {
       <div className="flex-1 overflow-y-auto px-3 space-y-2">
         {analyses.length === 0 ? (
           <div className="px-2 py-8 text-center text-sm text-gray-600">
-            Waiting for AI analysis...
+            Warte auf KI-Analyse …
           </div>
         ) : (
           <AnimatePresence initial={false}>
@@ -103,7 +103,7 @@ export default function AgentFeed({ analyses }: Props) {
                   <div className="mt-2 pt-2 border-t border-plant-border">
                     {analysis.actions.map((action, aIdx) => (
                       <div key={aIdx} className="flex items-start gap-1.5 text-[10px]">
-                        <span className="text-plant-accent font-semibold mt-px">ACTION</span>
+                        <span className="text-plant-accent font-semibold mt-px">AKTION</span>
                         <span className="text-gray-400">
                           {action.action} — {action.reason}
                         </span>

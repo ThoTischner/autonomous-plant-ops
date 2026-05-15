@@ -15,15 +15,15 @@ export default function EquipmentPanel({ latestReadings, equipmentStatus }: Prop
     <div className="py-3">
       <div className="px-4 mb-3 flex items-center justify-between">
         <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wider">
-          Equipment
+          Anlagen
         </h2>
         <span className="text-[10px] text-gray-600">
-          {equipmentList.length} units
+          {equipmentList.length} Anlagen
         </span>
       </div>
       {equipmentList.length === 0 ? (
         <div className="px-4 py-8 text-center text-sm text-gray-600">
-          Waiting for data...
+          Warte auf Daten …
         </div>
       ) : (
         equipmentList.map((id) => {

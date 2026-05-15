@@ -35,7 +35,15 @@ const EMPTY: Form = {
   flow_rate: { min: '0', max: '100', unit: 'L/min' },
 }
 
-const TYPES = ['pump', 'reactor', 'compressor', 'generic']
+const TYPES = [
+  'pump',
+  'reactor',
+  'compressor',
+  'forklift',
+  'truck',
+  'agv',
+  'generic',
+]
 
 function toForm(e: EquipmentDef): Form {
   const r = (x: { min: number; max: number; unit: string } | null, d: RangeForm) =>
@@ -180,7 +188,7 @@ export default function EquipmentModal({ open, onClose }: Props) {
       >
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-gray-200 uppercase tracking-wider">
-            Equipment verwalten
+            Anlagen verwalten
           </h2>
           <button
             onClick={onClose}

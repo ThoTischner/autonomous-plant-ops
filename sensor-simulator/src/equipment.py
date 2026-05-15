@@ -68,6 +68,29 @@ def _defaults() -> list[dict]:
             "vibration": {"min": 0, "max": 8, "unit": "mm/s"},
             "flow_rate": {"min": 200, "max": 300, "unit": "m³/h"},
         },
+        {
+            "equipment_id": "FL-401", "name": "Gabelstapler FL-401",
+            "etype": "forklift",
+            "temperature": {"min": 40, "max": 90, "unit": "°C"},
+            "pressure": {"min": 5, "max": 15, "unit": "bar"},
+            "vibration": {"min": 0, "max": 6, "unit": "mm/s"},
+            "flow_rate": {"min": 10, "max": 40, "unit": "L/min"},
+        },
+        {
+            "equipment_id": "TR-501", "name": "LKW TR-501", "etype": "truck",
+            "temperature": {"min": 70, "max": 105, "unit": "°C"},
+            "pressure": {"min": 2, "max": 6, "unit": "bar"},
+            "vibration": {"min": 0, "max": 4, "unit": "mm/s"},
+            "flow_rate": {"min": 5, "max": 30, "unit": "L/h"},
+        },
+        {
+            "equipment_id": "AGV-601", "name": "Transportroboter AGV-601",
+            "etype": "agv",
+            "temperature": {"min": 30, "max": 60, "unit": "°C"},
+            "pressure": {"min": 0, "max": 2, "unit": "bar"},
+            "vibration": {"min": 0, "max": 3, "unit": "mm/s"},
+            "flow_rate": None,
+        },
     ]
 
 
