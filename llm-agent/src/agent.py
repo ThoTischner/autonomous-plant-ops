@@ -94,9 +94,10 @@ def _inject_auto_recovery(
     restart = ActionType("restart_equipment")
     already = {a.equipment_id for a in analysis.actions if a.action == restart}
     for s in sensors_dicts:
-        eid = s.get("equipment_id")
+        eid = str(s.get("equipment_id") or "")
         if (
-            s.get("status") == "shutdown"
+            eid
+            and s.get("status") == "shutdown"
             and s.get("safe_to_restart") is True
             and (s.get("shutdown_seconds") or 0) >= RECOVERY_COOLDOWN
             and eid not in already
