@@ -129,14 +129,25 @@ Bei In-Cluster-Ollama das Modell einmalig pullen (Hinweis erscheint nach `helm i
 kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 ```
 
+**Demo-Szenarien triggern** — der `sensor-simulator`-Pod bedient `:8001` Pod-intern:
+
+```bash
+# Szenario auslösen (Liste: GET /scenarios/list)
+kubectl exec deploy/sensor-simulator -- python -c "import urllib.request,json,sys; \
+  urllib.request.urlopen(urllib.request.Request('http://localhost:8001/scenarios/trigger', \
+  data=json.dumps({'scenario':'thermal_runaway'}).encode(), \
+  headers={'Content-Type':'application/json'}))"
+```
+
+Verfügbar: `thermal_runaway`, `bearing_degradation`, `compressor_surge`, `pressure_spike`. Der Orchestrator triggert zusätzlich automatisch zufällige Szenarien.
+
 Alternativ direkt aus dem Repo-Checkout: `helm install plant-ops helm/autonomous-plant-ops`. Konfiguration in `helm/autonomous-plant-ops/values.yaml` (validiert über `values.schema.json`). Images sind auf `Chart.AppVersion` gepinnt und Multi-Arch (linux/amd64 + linux/arm64) — kein `:latest`.
 
-**Designentscheidungen:**
+**Betrieb:** Vollständige Werte-Referenz (aus dem Chart-Schema generiert): [Chart-README](helm/autonomous-plant-ops/README.md) · [ArtifactHub](https://artifacthub.io/packages/helm/autonomous-plant-ops/autonomous-plant-ops). Wesentliche Constraints:
 
-- **Feste Service-Namen** — die K8s-Service-Namen entsprechen 1:1 den Compose-Namen, damit hartkodierte URLs / `nginx.conf` unverändert funktionieren.
-- **Ollama per Toggle** — `ollama.mode` schaltet extern ⇄ in-cluster; `OLLAMA_HOST` wird automatisch aufgelöst.
-- **Orchestrator** — Deployment ohne Service, fix 1 Replica (mehrere würden Szenarien doppelt triggern).
-- **Ingress (nginx)** — Route aufs Frontend, `proxy-buffering: off` + lange Timeouts, damit der SSE-Stream offen bleibt.
+- Service-Namen sind fix — nicht umbenennen.
+- `services.orchestrator.replicas` muss `1` bleiben.
+- Der Ingress hält den SSE-Stream `/events/stream` offen.
 
 <details>
 <summary>CI / Release / ArtifactHub</summary>
@@ -442,11 +453,6 @@ autonomous-plant-ops/
 |               |-- AgentFeed.tsx        # KI-Reasoning-Feed
 |               +-- ActionLog.tsx        # Aktions-Protokoll
 |
-|-- n8n/
-|   +-- workflows/
-|       |-- main-monitoring-loop.json   # Haupt-Monitoring (5-Sek.-Loop)
-|       +-- alert-escalation.json       # Eskalationsworkflow
-|
 +-- scripts/
     |-- setup.sh                     # Komplettes Setup (Build + Model Pull)
     +-- trigger-scenario.sh          # Szenario-Trigger Helper
@@ -661,52 +667,6 @@ Empfaengt Events in Echtzeit als Server-Sent Events. Das Dashboard nutzt diesen 
 
 ---
 
-## n8n Workflows
-
-### Main Monitoring Loop
-
-**Datei:** `n8n/workflows/main-monitoring-loop.json`
-
-Der Hauptworkflow laeuft als Endlosschleife mit 5-Sekunden-Intervall:
-
-```
-[Schedule Trigger] --> [HTTP: Sensordaten] --> [HTTP: LLM Analyse]
-       ^                                            |
-       |                                            v
-       |                                    [IF: Anomalien?]
-       |                                     /          \
-       |                                   Ja           Nein
-       |                                   |              |
-       |                              [HTTP: Aktion]      |
-       |                              [HTTP: Dashboard] <--+
-       +--------------------------------------------------+
-```
-
-| Node | Beschreibung |
-|------|-------------|
-| **Schedule Trigger** | Loest alle 5 Sekunden aus |
-| **HTTP: Sensordaten** | `GET http://sensor-simulator:8001/sensors/latest` |
-| **HTTP: LLM Analyse** | `POST http://llm-agent:8002/agent/analyze` |
-| **IF: Anomalien?** | Prueft ob `anomalies` Array nicht leer |
-| **HTTP: Aktion** | `POST http://sensor-simulator:8001/actions/execute` |
-| **HTTP: Dashboard** | `POST http://dashboard-api:8003/events` |
-
-### Alert Escalation
-
-**Datei:** `n8n/workflows/alert-escalation.json`
-
-Wird ueber Webhook getriggert, wenn kritische Anomalien erkannt werden. Kann erweitert werden fuer E-Mail, Slack oder andere Benachrichtigungen.
-
-### Workflows importieren
-
-1. n8n oeffnen: [http://localhost:5678](http://localhost:5678)
-2. Klick auf **"+"** fuer neuen Workflow
-3. Menue (drei Punkte) --> **Import from File**
-4. JSON-Datei auswaehlen
-5. **Save** und **Activate**
-
----
-
 ## Dashboard
 
 Das React-Dashboard zeigt alle Informationen in Echtzeit via SSE-Streaming:
@@ -760,14 +720,26 @@ Der Custom Hook `useEventStream.ts` stellt die SSE-Verbindung zum Dashboard API 
 
 ## Konfiguration
 
-### Umgebungsvariablen
+### Helm Values
+
+Die vollständige Werte-Referenz wird mit [helm-docs](https://github.com/norwoodj/helm-docs) aus `values.yaml` generiert und in CI auf Aktualität geprüft — siehe [`helm/autonomous-plant-ops/README.md`](helm/autonomous-plant-ops/README.md) (auch auf [ArtifactHub](https://artifacthub.io/packages/helm/autonomous-plant-ops/autonomous-plant-ops) gerendert). Häufig genutzt:
+
+| Value | Default | Zweck |
+|---|---|---|
+| `ollama.mode` | `external` | `external` oder `in-cluster` |
+| `ollama.external.host` | `http://host.docker.internal:11434` | Externer Ollama-Endpoint |
+| `ollama.inCluster.gpu.enabled` | `false` | GPU für In-Cluster-Ollama |
+| `image.tag` | `""` | leer = `Chart.AppVersion` (gepinnt) |
+| `ingress.host` | `plant-ops.local` | Ingress-Hostname |
+
+### Umgebungsvariablen (Docker Compose)
 
 | Variable | Service | Standard | Beschreibung |
-|----------|---------|----------|-------------|
-| `OLLAMA_HOST` | llm-agent | `http://ollama:11434` | Ollama Server URL |
-| `OLLAMA_MODEL` | llm-agent | `llama3.1:8b` | Verwendetes LLM-Modell |
-| `N8N_HOST` | n8n | `0.0.0.0` | n8n Bind-Adresse |
-| `WEBHOOK_URL` | n8n | `http://n8n:5678/` | Webhook Basis-URL |
+|----------|---------|----------|--------------|
+| `OLLAMA_HOST` | llm-agent | `http://host.docker.internal:11434` | Ollama-Server-URL |
+| `OLLAMA_MODEL` | llm-agent | `llama3.2:3b` | Verwendetes LLM-Modell |
+| `CYCLE_INTERVAL` | orchestrator | `12` | Sekunden pro Monitoring-Zyklus |
+| `SCENARIO_CHANCE` | orchestrator | `0.08` | Szenario-Wahrscheinlichkeit pro Zyklus |
 
 ### LLM-Modell wechseln
 
@@ -942,12 +914,6 @@ docker compose exec ollama ollama pull llama3.2:3b
 # Dann OLLAMA_MODEL in docker-compose.yml anpassen
 ```
 
-### n8n Workflow loest nicht aus
-
-- Ist der Workflow **aktiviert** (gruener Toggle oben rechts)?
-- Sind die internen Hostnamen korrekt? Innerhalb von Docker: `sensor-simulator`, `llm-agent`, `dashboard-api` (nicht `localhost`)
-- Logs pruefen: `docker compose logs -f n8n`
-
 ### Dashboard zeigt "Disconnected"
 
 - Dashboard API laeuft? `curl http://localhost:8003/health`
@@ -1008,6 +974,6 @@ Dieses Projekt steht unter der [MIT License](LICENSE).
 
 **Autonomous Plant Ops** -- KI-gestuetzte Anlagenueberwachung, vollstaendig lokal.
 
-Gebaut mit Ollama, n8n, FastAPI, React und Docker.
+Gebaut mit Ollama, FastAPI, React, Helm und Docker.
 
 </div>

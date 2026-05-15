@@ -26,6 +26,12 @@ jobs:
         run: helm lint helm/autonomous-plant-ops
       - name: ct lint
         run: ct lint --config .github/ct.yaml --all
+      - name: helm-docs in sync
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work jnorwood/helm-docs:v1.14.2 \
+            helm-docs --chart-search-root=helm --template-files=README.md.gotmpl --sort-values-order=file
+          git diff --exit-code -- helm/autonomous-plant-ops/README.md \
+            || { echo "::error::helm/autonomous-plant-ops/README.md veraltet — 'helm-docs' lokal ausführen und committen."; exit 1; }
 
   integration:
     name: "kind deploy + smoke test"
