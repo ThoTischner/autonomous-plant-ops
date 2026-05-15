@@ -53,7 +53,7 @@ def page_session():
 
         # --- Synthetic interaction burst ---
         page.get_by_role(
-            "button", name="Thermisches Durchgehen"
+            "button", name="Motorüberhitzung", exact=False
         ).click(timeout=8000)
         page.wait_for_timeout(2000)
         page.get_by_role(
