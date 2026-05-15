@@ -22,11 +22,14 @@ class EquipmentConfig:
     speed_factor: float = field(default=1.0, repr=False)
     cooling_factor: float = field(default=1.0, repr=False)
     is_shutdown: bool = field(default=False, repr=False)
+    # Unix timestamp when the equipment was shut down (None if running).
+    shutdown_at: float | None = field(default=None, repr=False)
 
     def reset(self) -> None:
         self.speed_factor = 1.0
         self.cooling_factor = 1.0
         self.is_shutdown = False
+        self.shutdown_at = None
 
 
 EQUIPMENT: dict[str, EquipmentConfig] = {

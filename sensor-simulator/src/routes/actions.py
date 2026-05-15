@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from fastapi import APIRouter
 
@@ -30,7 +31,13 @@ async def execute_action(req: ActionRequest):
     match req.action:
         case ActionType.SHUTDOWN_EQUIPMENT:
             cfg.is_shutdown = True
+            cfg.shutdown_at = time.time()
             msg = f"{cfg.name} shut down"
+
+        case ActionType.RESTART_EQUIPMENT:
+            cfg.reset()
+            simulator.reset_drift(req.equipment_id)
+            msg = f"{cfg.name} restarted — back to normal operation"
 
         case ActionType.INCREASE_COOLING:
             cfg.cooling_factor = min(cfg.cooling_factor + 0.2, 2.0)

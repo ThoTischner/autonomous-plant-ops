@@ -5,6 +5,7 @@ import EquipmentPanel from './components/EquipmentPanel'
 import SensorCharts from './components/SensorCharts'
 import AgentFeed from './components/AgentFeed'
 import ActionLog from './components/ActionLog'
+import ControlPanel from './components/ControlPanel'
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -65,6 +66,7 @@ function App() {
 
       {/* Left sidebar — equipment panel */}
       <div className="overflow-y-auto border-r border-plant-border">
+        <ControlPanel />
         <EquipmentPanel
           latestReadings={latestReadings}
           equipmentStatus={equipmentStatus}

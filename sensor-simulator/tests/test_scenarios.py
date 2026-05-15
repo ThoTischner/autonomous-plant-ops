@@ -58,3 +58,14 @@ async def test_trigger_all_valid_scenarios(client):
         resp = await client.post("/scenarios/trigger", json={"scenario": scenario})
         assert resp.status_code == 200
         assert resp.json()["success"] is True
+
+
+async def test_reset_restores_normal(client):
+    # Trigger a scenario, then reset everything.
+    await client.post("/scenarios/trigger", json={"scenario": "thermal_runaway"})
+    resp = await client.post("/scenarios/reset")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["success"] is True
+    assert "R-201" in body["equipment"]
+    assert len(body["equipment"]) == 3

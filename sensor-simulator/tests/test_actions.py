@@ -119,3 +119,20 @@ async def test_action_response_has_timestamp(client):
     assert resp.status_code == 200
     body = resp.json()
     assert "timestamp" in body
+
+
+async def test_restart_equipment_clears_shutdown(client):
+    await client.post("/actions/execute", json={
+        "equipment_id": "R-201", "action": "shutdown_equipment", "reason": "test",
+    })
+    assert EQUIPMENT["R-201"].is_shutdown is True
+
+    resp = await client.post("/actions/execute", json={
+        "equipment_id": "R-201", "action": "restart_equipment", "reason": "safe again",
+    })
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["success"] is True
+    assert body["action"] == "restart_equipment"
+    assert EQUIPMENT["R-201"].is_shutdown is False
+    assert EQUIPMENT["R-201"].shutdown_at is None
