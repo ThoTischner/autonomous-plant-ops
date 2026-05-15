@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # --- Python services ---
+  - package-ecosystem: pip
+    directory: /sensor-simulator
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+  - package-ecosystem: pip
+    directory: /llm-agent
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+  - package-ecosystem: pip
+    directory: /orchestrator
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+  - package-ecosystem: pip
+    directory: /dashboard/api
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+
+  # --- Frontend ---
+  - package-ecosystem: npm
+    directory: /dashboard/frontend
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    labels: [dependencies, javascript]
+
+  # --- Container base images ---
+  - package-ecosystem: docker
+    directories:
+      - /sensor-simulator
+      - /llm-agent
+      - /orchestrator
+      - /dashboard/api
+      - /dashboard/frontend
+    schedule: { interval: weekly }
+    labels: [dependencies, docker]
+
+  # --- GitHub Actions ---
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    labels: [dependencies, ci]
