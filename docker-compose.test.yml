@@ -38,8 +38,23 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - sensor-simulator
+      - llm-agent
       - dashboard-api
+      - dashboard-frontend
     command: pytest integration/ -v --tb=short
+    networks:
+      - plant-net
+
+  e2e-test:
+    build:
+      context: ./tests/e2e
+      dockerfile: Dockerfile
+    depends_on:
+      - sensor-simulator
+      - llm-agent
+      - dashboard-api
+      - dashboard-frontend
+    command: pytest e2e/ -v --tb=short
     networks:
       - plant-net
 
