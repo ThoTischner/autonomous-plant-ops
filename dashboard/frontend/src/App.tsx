@@ -5,7 +5,7 @@ import EquipmentPanel from './components/EquipmentPanel'
 import SensorCharts from './components/SensorCharts'
 import AgentFeed from './components/AgentFeed'
 import ActionLog from './components/ActionLog'
-import ControlPanel from './components/ControlPanel'
+import ControlBar from './components/ControlBar'
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -55,8 +55,8 @@ function App() {
   } = useEventStream()
 
   return (
-    <div className="h-screen w-screen overflow-hidden grid grid-cols-[280px_1fr_320px] grid-rows-[auto_1fr_200px] gap-0">
-      {/* Header — full width */}
+    <div className="h-screen w-screen overflow-hidden grid grid-cols-[260px_1fr_440px] grid-rows-[auto_auto_1fr_220px] gap-0">
+      {/* Row 1 — status header, full width */}
       <div className="col-span-3">
         <PlantOverview
           equipmentStatus={equipmentStatus}
@@ -64,26 +64,30 @@ function App() {
         />
       </div>
 
-      {/* Left sidebar — equipment panel */}
+      {/* Row 2 — control + system prompt toolbar, full width */}
+      <div className="col-span-3 bg-plant-card border-b border-plant-border px-6 py-2">
+        <ControlBar />
+      </div>
+
+      {/* Row 3 — left: equipment */}
       <div className="overflow-y-auto border-r border-plant-border">
-        <ControlPanel />
         <EquipmentPanel
           latestReadings={latestReadings}
           equipmentStatus={equipmentStatus}
         />
       </div>
 
-      {/* Center — sensor charts */}
+      {/* Row 3 — center: sensor charts */}
       <div className="overflow-y-auto p-4">
         <SensorCharts sensorData={sensorData} />
       </div>
 
-      {/* Right sidebar — agent feed */}
-      <div className="overflow-y-auto border-l border-plant-border">
+      {/* Row 3 — right: AI agent feed (primary focus) */}
+      <div className="overflow-y-auto border-l-2 border-plant-accent/40 bg-plant-accent/[0.03]">
         <AgentFeed analyses={analyses} />
       </div>
 
-      {/* Bottom bar — action log, full width */}
+      {/* Row 4 — action log table, full width */}
       <div className="col-span-3 border-t border-plant-border overflow-hidden">
         <ActionLog actions={actions} />
       </div>
