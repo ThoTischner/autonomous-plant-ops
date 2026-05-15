@@ -1,0 +1,43 @@
+apiVersion: v2
+name: autonomous-plant-ops
+description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
+home: https://github.com/ThoTischner/autonomous-plant-ops
+sources:
+  - https://github.com/ThoTischner/autonomous-plant-ops
+keywords:
+  - llm
+  - ollama
+  - industrial-monitoring
+  - fastapi
+  - observability
+maintainers:
+  - name: ThoTischner
+    url: https://github.com/ThoTischner
+annotations:
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/license: MIT
+  artifacthub.io/prerelease: "true"
+  artifacthub.io/links: |
+    - name: Quellcode
+      url: https://github.com/ThoTischner/autonomous-plant-ops
+    - name: Support
+      url: https://github.com/ThoTischner/autonomous-plant-ops/issues
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/images: |
+    - name: sensor-simulator
+      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:latest
+    - name: llm-agent
+      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:latest
+    - name: orchestrator
+      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:latest
+    - name: dashboard-api
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:latest
+    - name: dashboard-frontend
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:latest
+  artifacthub.io/changes: |
+    - kind: added
+      description: Erstes Helm-Chart-Release — alle fuenf Services, Ollama-Toggle, nginx-Ingress mit SSE-Support

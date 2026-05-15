@@ -1,0 +1,106 @@
+# Default values for autonomous-plant-ops.
+
+# Gemeinsame Image-Einstellungen. Pro Service kann `image` ueberschrieben werden.
+image:
+  # Registry-Praefix mit Slash am Ende. Default = via GitHub Actions
+  # gebaute & nach GHCR gepushte Images. Fuer lokale Builds auf "" setzen.
+  registry: "ghcr.io/thotischner/"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Die fuenf Anwendungs-Services. Die Service-Namen (= Keys) werden bewusst
+# 1:1 als Kubernetes-Service-Namen verwendet, damit die im Code/in nginx.conf
+# hartkodierten URLs (http://sensor-simulator:8001 usw.) unveraendert
+# funktionieren. Nicht umbenennen ohne den Code anzupassen.
+services:
+  sensor-simulator:
+    image: autonomous-plant-ops/sensor-simulator
+    replicas: 1
+    port: 8001
+    healthPath: /health
+    resources: {}
+
+  llm-agent:
+    image: autonomous-plant-ops/llm-agent
+    replicas: 1
+    port: 8002
+    healthPath: /health
+    env:
+      OLLAMA_MODEL: "llama3.2:3b"
+      # OLLAMA_HOST wird automatisch aus .Values.ollama gesetzt.
+    resources: {}
+
+  orchestrator:
+    image: autonomous-plant-ops/orchestrator
+    replicas: 1            # NICHT hochskalieren: triggert sonst Szenarien doppelt.
+    service: false         # Kein Server -> kein Service, keine Ports.
+    env:
+      SENSOR_URL: "http://sensor-simulator:8001"
+      AGENT_URL: "http://llm-agent:8002"
+      DASHBOARD_URL: "http://dashboard-api:8003"
+      CYCLE_INTERVAL: "12"
+      SCENARIO_CHANCE: "0.08"
+    resources: {}
+
+  dashboard-api:
+    image: autonomous-plant-ops/dashboard-api
+    replicas: 1
+    port: 8003
+    healthPath: /health
+    resources: {}
+
+  dashboard-frontend:
+    image: autonomous-plant-ops/dashboard-frontend
+    replicas: 1
+    port: 80
+    # nginx.conf proxyt /api/ -> http://dashboard-api:8003 (fester Service-Name).
+    resources: {}
+
+# Ollama: per `mode` umschaltbar zwischen externem Endpoint und In-Cluster.
+ollama:
+  # external    -> kein Ollama-Deployment, llm-agent nutzt external.host
+  # in-cluster  -> Ollama wird im Cluster deployt, llm-agent nutzt http://ollama:11434
+  mode: external
+
+  external:
+    # Voll qualifizierte URL des externen Ollama-Servers.
+    host: "http://host.docker.internal:11434"
+
+  inCluster:
+    image: ollama/ollama:latest
+    pullPolicy: IfNotPresent
+    port: 11434
+    model: "llama3.2:3b"      # wird per Init/Post-Install nicht automatisch gepullt — siehe NOTES
+    resources: {}
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: ""        # leer = Default StorageClass
+    gpu:
+      enabled: false
+      # Bei GPU: z.B. nvidia.com/gpu Limit + passende NodeSelector/Tolerations.
+      resourceName: "nvidia.com/gpu"
+      count: 1
+      nodeSelector: {}
+      tolerations: []
+
+ingress:
+  enabled: true
+  className: nginx
+  host: plant-ops.local
+  # SSE-taugliche Annotations: kein Buffering, lange Read-Timeouts fuer
+  # /events/stream. Werden mit nutzerdefinierten annotations gemerged.
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  tls:
+    enabled: false
+    secretName: ""
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,8 @@
+# ArtifactHub Repository-Metadaten.
+# Wird vom chart-release-Workflow in den Root der gh-pages-Branch publiziert,
+# damit ArtifactHub die Repo-Ownership verifizieren kann.
+# repositoryID nach Anlegen des Repos in der ArtifactHub-UI eintragen.
+repositoryID: REPLACE_WITH_ARTIFACTHUB_REPO_ID
+owners:
+  - name: ThoTischner
+    email: info@holzbau-konfigurator.de
