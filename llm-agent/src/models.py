@@ -16,6 +16,7 @@ class SensorData(BaseModel):
     shutdown_seconds: Optional[float] = None
     latent_status: Optional[str] = None
     safe_to_restart: Optional[bool] = None
+    ramping_up: Optional[bool] = None
 
 
 class AnalysisRequest(BaseModel):

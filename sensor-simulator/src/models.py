@@ -46,6 +46,10 @@ class SensorReading(BaseModel):
     # whether it is safe to restart now (latent values all uncritical).
     latent_status: Optional[EquipmentStatus] = None
     safe_to_restart: Optional[bool] = None
+    # True while a freshly restarted unit is still ramping back to nominal
+    # load/cooling. Its values (esp. a low temperature) are an expected
+    # startup transient and must NOT trigger another shutdown.
+    ramping_up: Optional[bool] = None
 
 
 class ActionType(str, Enum):
