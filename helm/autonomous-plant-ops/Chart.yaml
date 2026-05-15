@@ -2,8 +2,8 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 type: application
-version: 0.2.1
-appVersion: "1.0.1"
+version: 0.2.2
+appVersion: "1.0.2"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
 sources:
@@ -26,24 +26,24 @@ annotations:
       url: https://github.com/ThoTischner/autonomous-plant-ops
     - name: Support
       url: https://github.com/ThoTischner/autonomous-plant-ops/issues
-  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/images: |
     - name: sensor-simulator
-      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.1
+      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.2
     - name: llm-agent
-      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.1
+      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.2
     - name: orchestrator
-      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.1
+      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.2
     - name: dashboard-api
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.1
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.2
     - name: dashboard-frontend
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.1
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.2
   artifacthub.io/changes: |
-    - kind: fixed
-      description: "Wiederanlauf-Oszillation behoben: abgeschaltete Anlagen werden nicht erneut notabgeschaltet; deterministischer Auto-Wiederanlauf nach Abkühlung"
-    - kind: fixed
-      description: "Hochlauf-Transient (niedrige Temperatur direkt nach Neustart) wird nicht mehr als kritisch fehlinterpretiert"
-    - kind: fixed
-      description: "Deterministischer In-Range-Schutz: gesunde Anlagen werden nicht mehr durch LLM-Fehlurteile abgeschaltet"
+    - kind: security
+      description: "CVE-2025-62727 behoben: starlette auf 0.49.1, fastapi auf 0.136.1 in allen FastAPI-Services (DoS via Range-Header)"
+    - kind: security
+      description: "CVE-2026-4800 behoben: lodash auf 4.18.1 (RCE, transitiv via recharts); vite 6.4.2, postcss 8.5.14"
     - kind: added
-      description: "Dashboard: Sensor-Gutbereiche je Anlage, fuhrpark-spezifische Szenarien mit Erklärungen, Klick-Feedback, deutscher Aktionslog"
+      description: "CI: Trivy-Scans (FS+Images), CodeQL (SAST), SBOM (SPDX) und Dependabot ergänzt"
+    - kind: fixed
+      description: "Wiederanlauf-Oszillation und Hochlauf-Transient behoben; deterministischer In-Range-Schutz und Auto-Wiederanlauf"
