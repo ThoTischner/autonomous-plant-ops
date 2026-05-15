@@ -93,12 +93,32 @@ jobs:
         run: docker build -f tests/Dockerfile -t integration-tests tests/
       - name: Start services
         run: |
-          docker compose up -d sensor-simulator dashboard-api
-          sleep 5
+          docker compose up -d sensor-simulator llm-agent dashboard-api dashboard-frontend
+          sleep 8
       - name: Run integration tests
         run: |
           docker run --rm --network autonomous-plant-ops_plant-net \
             integration-tests pytest integration/ -v --tb=short
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+
+  e2e-test:
+    name: "Browser E2E (console-error guard)"
+    runs-on: ubuntu-latest
+    needs: [docker-compose-build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build E2E runner
+        run: docker build -f tests/e2e/Dockerfile -t e2e-tests tests/e2e/
+      - name: Start full stack
+        run: |
+          docker compose up -d sensor-simulator llm-agent dashboard-api dashboard-frontend
+          sleep 8
+      - name: Run browser E2E
+        run: |
+          docker run --rm --network autonomous-plant-ops_plant-net \
+            e2e-tests pytest e2e/ -v --tb=short
       - name: Cleanup
         if: always()
         run: docker compose down -v

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import {
   AreaChart,
   Area,
@@ -5,10 +6,27 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   ReferenceLine,
 } from 'recharts'
 import type { SensorReading } from '../types'
+
+/** Tracks an element's pixel size so the chart never renders at size 0
+ *  (which makes Recharts emit "<line>/<circle> attribute … undefined"). */
+function useMeasuredSize() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect
+      if (r) setSize({ w: Math.floor(r.width), h: Math.floor(r.height) })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return { ref, size }
+}
 
 interface Props {
   title: string
@@ -32,6 +50,7 @@ interface ChartDataPoint {
 }
 
 export default function SensorChart({ title, dataKey, data, unit, normalRange }: Props) {
+  const { ref: boxRef, size } = useMeasuredSize()
   const equipmentIds = Array.from(data.keys()).sort()
 
   // Build unified timeline data
@@ -68,14 +87,18 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
         <h3 className="text-sm font-semibold text-gray-300">{title}</h3>
         <span className="text-[10px] text-gray-600 font-mono">{unit}</span>
       </div>
-      <div className="h-[calc(100%-28px)]">
-        {chartData.length === 0 ? (
+      <div ref={boxRef} className="h-[calc(100%-28px)]">
+        {chartData.length === 0 || size.w === 0 || size.h === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-gray-600">
             Waiting for data...
           </div>
         ) : (
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+          <AreaChart
+            width={size.w}
+            height={size.h}
+            data={chartData}
+            margin={{ top: 5, right: 5, left: -10, bottom: 0 }}
+          >
             <defs>
               <linearGradient id="gradient-blue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -121,16 +144,17 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
               }}
               labelStyle={{ color: '#9ca3af' }}
             />
-            {normalRange && (
+            {normalRange && chartData.length > 1 && (
               <>
                 <ReferenceLine
                   y={normalRange.min}
                   stroke="#10b981"
                   strokeDasharray="6 4"
                   strokeOpacity={0.5}
+                  ifOverflow="extendDomain"
                   label={{
                     value: `min ${normalRange.min}`,
-                    position: 'left',
+                    position: 'insideBottomLeft',
                     fill: '#10b981',
                     fontSize: 9,
                   }}
@@ -140,9 +164,10 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
                   stroke="#10b981"
                   strokeDasharray="6 4"
                   strokeOpacity={0.5}
+                  ifOverflow="extendDomain"
                   label={{
                     value: `max ${normalRange.max}`,
-                    position: 'left',
+                    position: 'insideTopLeft',
                     fill: '#10b981',
                     fontSize: 9,
                   }}
@@ -166,7 +191,6 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
               )
             })}
           </AreaChart>
-        </ResponsiveContainer>
         )}
       </div>
     </div>

@@ -162,3 +162,52 @@ def test_dashboard_api_post_scenario_event(dashboard_client):
     body = resp.json()
     assert body["status"] == "ok"
     assert "event_id" in body
+
+
+# --- Control passthrough (dashboard-api -> sensor-simulator / llm-agent) ---
+
+FRONTEND_URL = "http://dashboard-frontend:80"
+
+
+@pytest.fixture(scope="module")
+def frontend_client():
+    with httpx.Client(base_url=FRONTEND_URL, timeout=10.0) as client:
+        yield client
+
+
+def test_control_list_scenarios(dashboard_client):
+    resp = dashboard_client.get("/control/scenarios")
+    assert resp.status_code == 200
+    assert "thermal_runaway" in resp.json()
+
+
+def test_control_trigger_then_reset(dashboard_client):
+    t = dashboard_client.post("/control/scenario", json={"scenario": "pressure_spike"})
+    assert t.status_code == 200 and t.json()["success"] is True
+
+    r = dashboard_client.post("/control/reset")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["success"] is True
+    assert set(body["equipment"]) == {"P-101", "R-201", "C-301"}
+
+
+def test_control_prompt_roundtrip(dashboard_client):
+    dashboard_client.post("/control/prompt/reset")
+    base = dashboard_client.get("/control/prompt").json()
+    assert base["is_default"] is True
+
+    upd = dashboard_client.put("/control/prompt", json={"prompt": "Integration override"})
+    assert upd.json()["prompt"] == "Integration override"
+    assert upd.json()["is_default"] is False
+
+    rst = dashboard_client.post("/control/prompt/reset")
+    assert rst.json()["is_default"] is True
+
+
+def test_frontend_serves_and_proxies_control(frontend_client):
+    # nginx serves the SPA and proxies /api/ -> dashboard-api
+    assert frontend_client.get("/").status_code == 200
+    proxied = frontend_client.get("/api/control/scenarios")
+    assert proxied.status_code == 200
+    assert "bearing_degradation" in proxied.json()
