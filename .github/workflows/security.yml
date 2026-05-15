@@ -13,6 +13,9 @@ on:
 permissions:
   contents: read
 
+env:
+  TRIVY_VERSION: v0.70.0
+
 jobs:
   # Fast, runs on every change: dependency CVEs, leaked secrets, IaC/Dockerfile
   # misconfigurations across the whole repo.
@@ -26,15 +29,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b "$RUNNER_TEMP/bin" "$TRIVY_VERSION"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
       - name: Trivy filesystem scan (SARIF -> Security tab)
-        uses: aquasecurity/trivy-action@v0.30.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln,secret,misconfig
-          format: sarif
-          output: trivy-fs.sarif
-          severity: HIGH,CRITICAL
+        run: |
+          trivy fs --no-progress --scanners vuln,secret,misconfig \
+            --severity HIGH,CRITICAL --format sarif -o trivy-fs.sarif .
 
       - name: Upload SARIF
         if: always()
@@ -43,16 +47,11 @@ jobs:
           sarif_file: trivy-fs.sarif
           category: trivy-fs
 
-      - name: Trivy filesystem scan (gate — fail on fixable HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@v0.30.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln,secret,misconfig
-          format: table
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+      - name: Trivy filesystem gate (fail on fixable HIGH/CRITICAL)
+        run: |
+          trivy fs --no-progress --scanners vuln,secret,misconfig \
+            --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+            --format table .
 
   # Heavier: build each service image, scan it for OS+lib CVEs and emit an
   # SBOM. Skipped on PRs to save CI minutes (covered on main / tags / weekly).
@@ -76,17 +75,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b "$RUNNER_TEMP/bin" "$TRIVY_VERSION"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
       - name: Build image
         run: docker build -t ${{ matrix.name }}:scan ${{ matrix.context }}/
 
       - name: Trivy image scan (SARIF -> Security tab)
-        uses: aquasecurity/trivy-action@v0.30.0
-        with:
-          scan-type: image
-          image-ref: ${{ matrix.name }}:scan
-          format: sarif
-          output: trivy-${{ matrix.name }}.sarif
-          severity: HIGH,CRITICAL
+        run: |
+          trivy image --no-progress --severity HIGH,CRITICAL \
+            --format sarif -o trivy-${{ matrix.name }}.sarif \
+            ${{ matrix.name }}:scan
 
       - name: Upload SARIF
         if: always()
@@ -95,13 +97,10 @@ jobs:
           sarif_file: trivy-${{ matrix.name }}.sarif
           category: trivy-image-${{ matrix.name }}
 
-      - name: Generate SBOM (Syft, SPDX-JSON)
-        uses: anchore/sbom-action@v0.24.0
-        with:
-          image: ${{ matrix.name }}:scan
-          format: spdx-json
-          artifact-name: sbom-${{ matrix.name }}.spdx.json
-          output-file: sbom-${{ matrix.name }}.spdx.json
+      - name: Generate SBOM (Trivy, SPDX-JSON)
+        run: |
+          trivy image --no-progress --format spdx-json \
+            -o sbom-${{ matrix.name }}.spdx.json ${{ matrix.name }}:scan
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
@@ -110,12 +109,8 @@ jobs:
           path: sbom-${{ matrix.name }}.spdx.json
           retention-days: 90
 
-      - name: Trivy image scan (gate — fail on fixable HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@v0.30.0
-        with:
-          scan-type: image
-          image-ref: ${{ matrix.name }}:scan
-          format: table
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+      - name: Trivy image gate (fail on fixable HIGH/CRITICAL)
+        run: |
+          trivy image --no-progress --severity HIGH,CRITICAL \
+            --ignore-unfixed --exit-code 1 --format table \
+            ${{ matrix.name }}:scan
