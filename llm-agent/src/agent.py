@@ -14,7 +14,7 @@ from .models import (
     RecommendedAction,
     Severity,
 )
-from .prompts import build_user_prompt, get_system_prompt
+from .prompts import RECOVERY_COOLDOWN, build_user_prompt, get_system_prompt
 from .ranges import get_ranges_text
 
 logger = logging.getLogger(__name__)
@@ -79,6 +79,43 @@ def _normalize_action(raw: dict) -> RecommendedAction:
         urgency=Severity(urgency),
         parameters=parameters,
     )
+
+
+def _inject_auto_recovery(
+    analysis: AnalysisResponse, sensors_dicts: list[dict]
+) -> None:
+    """Deterministic recovery — must NOT depend on the LLM.
+
+    A small model, told a shut-down unit is "not an anomaly", tends to
+    answer no_action forever and never restarts it. So whenever a unit is
+    safely cooled down past the cooldown, force restart_equipment unless
+    the LLM already recommended it. Runs even if the LLM call failed.
+    """
+    restart = ActionType("restart_equipment")
+    already = {a.equipment_id for a in analysis.actions if a.action == restart}
+    for s in sensors_dicts:
+        eid = s.get("equipment_id")
+        if (
+            s.get("status") == "shutdown"
+            and s.get("safe_to_restart") is True
+            and (s.get("shutdown_seconds") or 0) >= RECOVERY_COOLDOWN
+            and eid not in already
+        ):
+            logger.info(
+                "Auto-recovery: forcing restart_equipment on %s "
+                "(safe, %.0fs since shutdown)",
+                eid, s.get("shutdown_seconds") or 0,
+            )
+            analysis.actions.append(RecommendedAction(
+                equipment_id=eid,
+                action=restart,
+                reason=(
+                    "Automatischer Wiederanlauf: Anlage abgekühlt, alle "
+                    "Werte unkritisch, Cooldown abgelaufen."
+                ),
+                urgency=Severity("medium"),
+                parameters={},
+            ))
 
 
 class AnalysisAgent:
@@ -160,6 +197,43 @@ class AnalysisAgent:
                     filtered_actions.append(act)
                 actions = filtered_actions
 
+            # Deterministic in-range guard: the small LLM frequently judges
+            # a value that is plainly inside its normal band (e.g. 90°C in
+            # a 70-105°C range) as "critical" and shuts the unit down. The
+            # sensor-simulator already computes the authoritative status, so
+            # for any unit it reports as NORMAL we drop LLM-invented
+            # anomalies and any disruptive corrective action. The LLM may
+            # still reason; it may not act against a healthy unit.
+            DISRUPTIVE = {
+                ActionType("shutdown_equipment"),
+                ActionType("reduce_speed"),
+                ActionType("increase_cooling"),
+                ActionType("adjust_setpoint"),
+            }
+            normal_ids = {
+                s.get("equipment_id")
+                for s in sensors_dicts
+                if s.get("status") == "normal"
+            }
+            if normal_ids:
+                anomalies = [
+                    a for a in anomalies if a.equipment_id not in normal_ids
+                ]
+                kept = []
+                for act in actions:
+                    if (
+                        act.equipment_id in normal_ids
+                        and act.action in DISRUPTIVE
+                    ):
+                        logger.info(
+                            "Dropping %s on healthy %s (sensor status=normal "
+                            "— LLM misjudged an in-range value)",
+                            act.action.value, act.equipment_id,
+                        )
+                        continue
+                    kept.append(act)
+                actions = kept
+
             analysis = AnalysisResponse(
                 anomalies=anomalies,
                 reasoning=parsed.get("reasoning", parsed.get("analysis", "")),
@@ -174,6 +248,9 @@ class AnalysisAgent:
                 actions=[],
                 timestamp=datetime.now(timezone.utc),
             )
+
+        # Deterministic recovery runs regardless of LLM success/failure.
+        _inject_auto_recovery(analysis, sensors_dicts)
 
         # Update rolling context
         for s in sensors_dicts:
