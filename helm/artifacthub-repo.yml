@@ -1,7 +1,7 @@
 # ArtifactHub Repository-Metadaten.
 # Wird vom chart-release-Workflow in den Root der gh-pages-Branch publiziert,
 # damit ArtifactHub die Repo-Ownership verifizieren kann.
-# repositoryID nach Anlegen des Repos in der ArtifactHub-UI eintragen.
-repositoryID: REPLACE_WITH_ARTIFACTHUB_REPO_ID
+# repositoryID aus der ArtifactHub-UI (Control Panel -> Repositories).
+repositoryID: e4487a64-d7e0-49ae-b35e-80e256c9a1eb
 owners:
   - name: ThoTischner
