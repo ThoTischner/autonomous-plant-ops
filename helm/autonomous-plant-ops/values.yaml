@@ -5,7 +5,9 @@ image:
   # Registry-Praefix mit Slash am Ende. Default = via GitHub Actions
   # gebaute & nach GHCR gepushte Images. Fuer lokale Builds auf "" setzen.
   registry: "ghcr.io/thotischner/"
-  tag: "latest"
+  # Leer = pinned auf Chart.AppVersion (release-getrieben, reproduzierbar).
+  # Nur fuer Dev/Override auf einen konkreten Tag setzen (z.B. "main").
+  tag: ""
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []

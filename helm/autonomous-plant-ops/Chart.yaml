@@ -2,7 +2,7 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "1.0.0"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
@@ -20,7 +20,7 @@ maintainers:
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/license: MIT
-  artifacthub.io/prerelease: "true"
+  artifacthub.io/prerelease: "false"
   artifacthub.io/links: |
     - name: Quellcode
       url: https://github.com/ThoTischner/autonomous-plant-ops
@@ -29,15 +29,15 @@ annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |
     - name: sensor-simulator
-      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:latest
+      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.0
     - name: llm-agent
-      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:latest
+      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.0
     - name: orchestrator
-      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:latest
+      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.0
     - name: dashboard-api
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:latest
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.0
     - name: dashboard-frontend
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:latest
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.0
   artifacthub.io/changes: |
-    - kind: added
-      description: Erstes Helm-Chart-Release — alle fuenf Services, Ollama-Toggle, nginx-Ingress mit SSE-Support
+    - kind: changed
+      description: "Images werden auf Chart.AppVersion gepinnt statt :latest (release-getrieben, reproduzierbar)"

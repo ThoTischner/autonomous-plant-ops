@@ -14,7 +14,8 @@ app.kubernetes.io/name: {{ . }}
 {{- define "apo.image" -}}
 {{- $root := .root -}}
 {{- $img := .svc.image -}}
-{{- $tag := .svc.tag | default $root.Values.image.tag -}}
+{{- /* Tag-Aufloesung: pro-Service-Override > globaler image.tag > Chart.AppVersion */ -}}
+{{- $tag := .svc.tag | default $root.Values.image.tag | default $root.Chart.AppVersion -}}
 {{- printf "%s%s:%s" $root.Values.image.registry $img $tag -}}
 {{- end -}}
 
