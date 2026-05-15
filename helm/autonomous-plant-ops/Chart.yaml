@@ -2,8 +2,8 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 type: application
-version: 0.2.0
-appVersion: "1.0.0"
+version: 0.2.1
+appVersion: "1.0.1"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
 sources:
@@ -29,15 +29,21 @@ annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |
     - name: sensor-simulator
-      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.0
+      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.1
     - name: llm-agent
-      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.0
+      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.1
     - name: orchestrator
-      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.0
+      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.1
     - name: dashboard-api
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.0
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.1
     - name: dashboard-frontend
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.0
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.1
   artifacthub.io/changes: |
-    - kind: changed
-      description: "Images werden auf Chart.AppVersion gepinnt statt :latest (release-getrieben, reproduzierbar)"
+    - kind: fixed
+      description: "Wiederanlauf-Oszillation behoben: abgeschaltete Anlagen werden nicht erneut notabgeschaltet; deterministischer Auto-Wiederanlauf nach Abkühlung"
+    - kind: fixed
+      description: "Hochlauf-Transient (niedrige Temperatur direkt nach Neustart) wird nicht mehr als kritisch fehlinterpretiert"
+    - kind: fixed
+      description: "Deterministischer In-Range-Schutz: gesunde Anlagen werden nicht mehr durch LLM-Fehlurteile abgeschaltet"
+    - kind: added
+      description: "Dashboard: Sensor-Gutbereiche je Anlage, fuhrpark-spezifische Szenarien mit Erklärungen, Klick-Feedback, deutscher Aktionslog"
