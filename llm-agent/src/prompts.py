@@ -7,10 +7,8 @@ DEFAULT_SYSTEM_PROMPT = """You are an industrial plant monitoring AI agent. \
 Your goal is SAFE, CONTINUOUS operation: detect anomalies, act to protect \
 equipment, and restore normal operation as soon as it is safe again.
 
-NORMAL RANGES:
-- P-101 (Pump): temperature 60-80°C, pressure 2-4 bar, vibration 0-5 mm/s, flow 100-150 L/min
-- R-201 (Reactor): temperature 150-200°C, pressure 5-10 bar, vibration 0-3 mm/s
-- C-301 (Compressor): temperature 40-70°C, pressure 6-12 bar, vibration 0-8 mm/s, flow 200-300 m³/h
+The current plant's NORMAL RANGES are provided with each request (they can
+change at runtime — always use the ranges given in the user message).
 
 RULES:
 - If ANY sensor value is OUTSIDE its normal range, you MUST add it to the anomalies list.
@@ -67,8 +65,14 @@ def build_user_prompt(
     sensors: list[dict],
     history: Optional[list[dict]] = None,
     recent_actions: Optional[list[dict]] = None,
+    ranges_text: Optional[str] = None,
 ) -> str:
     parts = []
+
+    if ranges_text:
+        parts.append("NORMAL RANGES (current plant configuration):")
+        parts.append(ranges_text)
+        parts.append("")
 
     parts.append("Current sensor readings:")
     for s in sensors:

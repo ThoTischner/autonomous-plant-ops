@@ -3,6 +3,10 @@ services:
     build: ./sensor-simulator
     ports:
       - "8001:8001"
+    environment:
+      - EQUIPMENT_FILE=/data/equipment.json
+    volumes:
+      - sensor-data:/data
     networks:
       - plant-net
     restart: unless-stopped
@@ -72,7 +76,8 @@ services:
       - plant-net
     restart: unless-stopped
 
-# Keine Volumes mehr noetig (n8n-data entfiel mit dem n8n-Service).
+volumes:
+  sensor-data:
 
 networks:
   plant-net:

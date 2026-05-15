@@ -211,3 +211,26 @@ def test_frontend_serves_and_proxies_control(frontend_client):
     proxied = frontend_client.get("/api/control/scenarios")
     assert proxied.status_code == 200
     assert "bearing_degradation" in proxied.json()
+
+
+def test_control_equipment_crud(dashboard_client):
+    base = dashboard_client.get("/control/equipment")
+    assert base.status_code == 200
+    start_ids = {e["equipment_id"] for e in base.json()}
+    assert {"P-101", "R-201", "C-301"}.issubset(start_ids)
+
+    new = {
+        "equipment_id": "IT-1", "name": "IntegrationUnit", "etype": "pump",
+        "temperature": {"min": 10, "max": 20, "unit": "°C"},
+        "pressure": {"min": 1, "max": 2, "unit": "bar"},
+        "vibration": {"min": 0, "max": 1, "unit": "mm/s"},
+        "flow_rate": None,
+    }
+    assert dashboard_client.post("/control/equipment", json=new).status_code == 200
+    after = {e["equipment_id"] for e in dashboard_client.get("/control/equipment").json()}
+    assert "IT-1" in after
+
+    assert dashboard_client.request(
+        "DELETE", "/control/equipment/IT-1"
+    ).status_code == 200
+    dashboard_client.post("/control/equipment/reset")

@@ -47,6 +47,8 @@ kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 | services.sensor-simulator.replicas | int | `1` | Replica-Anzahl. |
 | services.sensor-simulator.port | int | `8001` | Container-/Service-Port. |
 | services.sensor-simulator.healthPath | string | `"/health"` | HTTP-Pfad für Readiness/Liveness-Probe. |
+| services.sensor-simulator.env | object | `{"EQUIPMENT_FILE":"/data/equipment.json"}` | Umgebungsvariablen. |
+| services.sensor-simulator.persistence | object | `{"enabled":true,"mountPath":"/data","size":"1Gi","storageClass":""}` | Persistente Equipment-Definition (PVC). `enabled: false` = ephemer. |
 | services.sensor-simulator.resources | object | `{}` | Ressourcen-Requests/Limits. |
 | services.llm-agent.image | string | `"autonomous-plant-ops/llm-agent"` | Image-Repository. |
 | services.llm-agent.replicas | int | `1` | Replica-Anzahl. |

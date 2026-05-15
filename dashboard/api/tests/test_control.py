@@ -61,3 +61,19 @@ async def test_prompt_get_put_reset_proxied(client):
     assert (await client.post("/control/prompt/reset")).json()["url"].endswith(
         "/agent/prompt/reset"
     )
+
+
+async def test_equipment_list_proxied(client):
+    r = await client.get("/control/equipment")
+    assert r.json()["url"].endswith("/equipment")
+
+
+async def test_equipment_add_update_delete_reset_proxied(client):
+    a = await client.post("/control/equipment", json={"equipment_id": "X-1"})
+    assert a.json()["method"] == "POST" and a.json()["url"].endswith("/equipment")
+    u = await client.put("/control/equipment/X-1", json={"name": "n"})
+    assert u.json()["method"] == "PUT" and u.json()["url"].endswith("/equipment/X-1")
+    d = await client.delete("/control/equipment/X-1")
+    assert d.json()["method"] == "DELETE" and d.json()["url"].endswith("/equipment/X-1")
+    rs = await client.post("/control/equipment/reset")
+    assert rs.json()["url"].endswith("/equipment/reset")

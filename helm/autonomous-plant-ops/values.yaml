@@ -23,6 +23,15 @@ services:
     port: 8001
     # -- HTTP-Pfad für Readiness/Liveness-Probe.
     healthPath: /health
+    # -- Umgebungsvariablen.
+    env:
+      EQUIPMENT_FILE: /data/equipment.json
+    # -- Persistente Equipment-Definition (PVC). `enabled: false` = ephemer.
+    persistence:
+      enabled: true
+      size: 1Gi
+      mountPath: /data
+      storageClass: ""
     # -- Ressourcen-Requests/Limits.
     resources: {}
 

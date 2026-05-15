@@ -15,6 +15,7 @@ from .models import (
     Severity,
 )
 from .prompts import build_user_prompt, get_system_prompt
+from .ranges import get_ranges_text
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +100,11 @@ class AnalysisAgent:
         history = request.history or self.context.get_history_summary()
         recent_actions = request.recent_actions or self.context.get_recent_actions()
 
+        ranges_text = await get_ranges_text()
         system_prompt = get_system_prompt()
-        user_prompt = build_user_prompt(sensors_dicts, history, recent_actions)
+        user_prompt = build_user_prompt(
+            sensors_dicts, history, recent_actions, ranges_text=ranges_text
+        )
 
         try:
             response = await self.client.chat(

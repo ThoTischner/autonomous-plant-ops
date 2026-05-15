@@ -7,6 +7,22 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class RangeModel(BaseModel):
+    min: float
+    max: float
+    unit: str = ""
+
+
+class EquipmentDef(BaseModel):
+    equipment_id: str
+    name: str
+    etype: str = "generic"
+    temperature: RangeModel
+    pressure: RangeModel
+    vibration: RangeModel
+    flow_rate: Optional[RangeModel] = None
+
+
 class EquipmentStatus(str, Enum):
     NORMAL = "normal"
     WARNING = "warning"

@@ -56,18 +56,31 @@ def _determine_status(reading: SensorReading, cfg: EquipmentConfig) -> Equipment
 
 class Simulator:
     def __init__(self) -> None:
-        self.history: dict[str, deque[SensorReading]] = {
-            eid: deque(maxlen=MAX_HISTORY) for eid in EQUIPMENT
-        }
+        self.history: dict[str, deque[SensorReading]] = {}
         self.latest: dict[str, SensorReading] = {}
-        self._drift: dict[str, dict[str, float]] = {
-            eid: {"temperature": 0, "pressure": 0, "vibration": 0, "flow_rate": 0}
-            for eid in EQUIPMENT
-        }
+        self._drift: dict[str, dict[str, float]] = {}
         self._running = False
+        for eid in EQUIPMENT:
+            self.ensure(eid)
+
+    def ensure(self, equipment_id: str) -> None:
+        """Lazily init state for equipment added at runtime."""
+        if equipment_id not in self.history:
+            self.history[equipment_id] = deque(maxlen=MAX_HISTORY)
+        if equipment_id not in self._drift:
+            self._drift[equipment_id] = {
+                "temperature": 0, "pressure": 0, "vibration": 0, "flow_rate": 0,
+            }
+
+    def forget(self, equipment_id: str) -> None:
+        """Drop all state for deleted equipment."""
+        self.history.pop(equipment_id, None)
+        self.latest.pop(equipment_id, None)
+        self._drift.pop(equipment_id, None)
 
     def generate_reading(self, equipment_id: str) -> SensorReading:
         cfg = EQUIPMENT[equipment_id]
+        self.ensure(equipment_id)
 
         if cfg.is_shutdown:
             shutdown_seconds = None
@@ -135,7 +148,7 @@ class Simulator:
         self._running = True
         logger.info("Simulator started")
         while self._running:
-            for eid in EQUIPMENT:
+            for eid in list(EQUIPMENT):
                 self.generate_reading(eid)
             await asyncio.sleep(1.0)
 

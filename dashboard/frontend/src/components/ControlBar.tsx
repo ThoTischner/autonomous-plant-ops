@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import EquipmentModal from './EquipmentModal'
 
 const API = '/api'
 
@@ -14,6 +15,7 @@ export default function ControlBar() {
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
 
+  const [equipOpen, setEquipOpen] = useState(false)
   const [promptOpen, setPromptOpen] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [isDefault, setIsDefault] = useState(true)
@@ -132,6 +134,14 @@ export default function ControlBar() {
       <div className="h-5 w-px bg-plant-border mx-1" />
 
       <button
+        onClick={() => setEquipOpen(true)}
+        className="px-2.5 py-1 text-xs rounded-md bg-plant-card border border-plant-border
+                   hover:border-plant-accent hover:text-plant-accent transition-colors"
+      >
+        Equipment
+      </button>
+
+      <button
         onClick={() => setPromptOpen(true)}
         className="px-2.5 py-1 text-xs rounded-md bg-plant-card border border-plant-border
                    hover:border-plant-accent hover:text-plant-accent transition-colors
@@ -153,6 +163,8 @@ export default function ControlBar() {
           {msg}
         </span>
       )}
+
+      <EquipmentModal open={equipOpen} onClose={() => setEquipOpen(false)} />
 
       {promptOpen && (
         <div

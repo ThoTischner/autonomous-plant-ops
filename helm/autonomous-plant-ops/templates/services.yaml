@@ -78,6 +78,36 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if and $svc.persistence $svc.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ $svc.persistence.mountPath | default "/data" }}
+          {{- end }}
+      {{- if and $svc.persistence $svc.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $name }}-data
+      {{- end }}
+{{- if and $svc.persistence $svc.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $name }}-data
+  labels:
+    {{- include "apo.labels" $ | nindent 4 }}
+    {{- include "apo.selectorLabels" $name | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $svc.persistence.size | default "1Gi" }}
+  {{- if $svc.persistence.storageClass }}
+  storageClassName: {{ $svc.persistence.storageClass }}
+  {{- end }}
+{{- end }}
 {{- if ne $svc.service false }}
 ---
 apiVersion: v1
