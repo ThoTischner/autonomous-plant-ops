@@ -3,11 +3,38 @@ import EquipmentModal from './EquipmentModal'
 
 const API = '/api'
 
-const SCENARIO_LABELS: Record<string, string> = {
-  thermal_runaway: 'Thermisches Durchgehen',
-  bearing_degradation: 'Lagerverschleiß',
-  compressor_surge: 'Verdichterpumpen',
-  pressure_spike: 'Druckspitze',
+interface ScenarioMeta {
+  label: string
+  desc: string
+}
+
+// Fleet-themed (Fuhrpark) scenarios. Keys are the backend scenario ids.
+const SCENARIO_META: Record<string, ScenarioMeta> = {
+  thermal_runaway: {
+    label: 'Motorüberhitzung',
+    desc: 'LKW TR-501: Kühlmittelausfall/Überlast — die Motortemperatur '
+      + 'steigt kontinuierlich bis in den kritischen Bereich. Der KI-Agent '
+      + 'muss kühlen bzw. notabschalten und danach wieder anfahren.',
+  },
+  bearing_degradation: {
+    label: 'Lagerschaden',
+    desc: 'Gabelstapler FL-401: fortschreitender Radlagerverschleiß — '
+      + 'Vibration und Temperatur steigen langsam an.',
+  },
+  compressor_surge: {
+    label: 'Antriebsinstabilität',
+    desc: 'Transportroboter AGV-601: instabiler Fahrantrieb — der '
+      + 'Systemdruck pendelt stark und die Vibration nimmt zu.',
+  },
+  pressure_spike: {
+    label: 'Hydraulikdruckspitze',
+    desc: 'Gabelstapler FL-402: plötzliche Druckspitze im Hydrauliksystem '
+      + '(Ventil-/Pumpenfehler).',
+  },
+}
+
+function scenarioLabel(id: string): string {
+  return SCENARIO_META[id]?.label ?? id
 }
 
 export default function ControlBar() {
@@ -26,7 +53,7 @@ export default function ControlBar() {
     fetch(`${API}/control/scenarios`)
       .then((r) => r.json())
       .then((d) => Array.isArray(d) && setScenarios(d))
-      .catch(() => setScenarios(Object.keys(SCENARIO_LABELS)))
+      .catch(() => setScenarios(Object.keys(SCENARIO_META)))
     loadPrompt()
   }, [])
 
@@ -101,25 +128,44 @@ export default function ControlBar() {
     }
   }
 
-  const list = scenarios.length ? scenarios : Object.keys(SCENARIO_LABELS)
+  const list = scenarios.length ? scenarios : Object.keys(SCENARIO_META)
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-[10px] uppercase tracking-wider text-gray-500 mr-1">
         Szenario
       </span>
-      {list.map((s) => (
-        <button
-          key={s}
-          onClick={() => trigger(s)}
-          disabled={busy !== null}
-          className="px-2.5 py-1 text-xs rounded-md bg-plant-card border border-plant-border
-                     hover:border-plant-warning hover:text-plant-warning
-                     disabled:opacity-50 transition-colors"
-        >
-          {busy === s ? '…' : SCENARIO_LABELS[s] ?? s}
-        </button>
-      ))}
+      {list.map((s) => {
+        const desc = SCENARIO_META[s]?.desc
+        return (
+          <div
+            key={s}
+            className="flex items-center rounded-md bg-plant-card border border-plant-border
+                       hover:border-plant-warning transition-colors overflow-hidden"
+          >
+            <button
+              onClick={() => trigger(s)}
+              disabled={busy !== null}
+              title={desc}
+              className="px-2.5 py-1 text-xs hover:text-plant-warning
+                         disabled:opacity-50 transition-colors"
+            >
+              {busy === s ? '…' : scenarioLabel(s)}
+            </button>
+            {desc && (
+              <span
+                title={desc}
+                aria-label={`Erklärung: ${scenarioLabel(s)}`}
+                className="flex items-center justify-center w-5 h-6 text-[10px]
+                           font-bold text-gray-500 border-l border-plant-border
+                           cursor-help hover:text-plant-warning hover:bg-plant-warning/10"
+              >
+                ?
+              </span>
+            )}
+          </div>
+        )
+      })}
 
       <button
         onClick={resetPlant}
