@@ -6,7 +6,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ReferenceLine,
 } from 'recharts'
 import type { SensorReading } from '../types'
 
@@ -18,12 +17,24 @@ function useMeasuredSize() {
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    let raf = 0
     const ro = new ResizeObserver((entries) => {
       const r = entries[0]?.contentRect
-      if (r) setSize({ w: Math.floor(r.width), h: Math.floor(r.height) })
+      if (!r) return
+      // Collapse rapid resize/animation callbacks to one post-layout value.
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const w = Math.floor(r.width)
+        const h = Math.floor(r.height)
+        // Below this Recharts emits undefined axis coords mid-layout.
+        setSize(w >= 60 && h >= 60 ? { w, h } : { w: 0, h: 0 })
+      })
     })
     ro.observe(el)
-    return () => ro.disconnect()
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
   }, [])
   return { ref, size }
 }
@@ -33,7 +44,6 @@ interface Props {
   dataKey: keyof SensorReading
   data: Map<string, SensorReading[]>
   unit: string
-  normalRange?: { min: number; max: number }
 }
 
 const EQUIPMENT_COLORS = [
@@ -49,7 +59,7 @@ interface ChartDataPoint {
   [key: string]: string | number | undefined
 }
 
-export default function SensorChart({ title, dataKey, data, unit, normalRange }: Props) {
+export default function SensorChart({ title, dataKey, data, unit }: Props) {
   const { ref: boxRef, size } = useMeasuredSize()
   const equipmentIds = Array.from(data.keys()).sort()
 
@@ -101,9 +111,9 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
         </div>
       )}
       <div ref={boxRef} className="flex-1 min-h-0">
-        {chartData.length === 0 || size.w === 0 || size.h === 0 ? (
+        {chartData.length < 2 || size.w === 0 || size.h === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-gray-600">
-            Waiting for data...
+            Warte auf Daten …
           </div>
         ) : (
           <AreaChart
@@ -157,36 +167,6 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
               }}
               labelStyle={{ color: '#9ca3af' }}
             />
-            {normalRange && chartData.length > 1 && (
-              <>
-                <ReferenceLine
-                  y={normalRange.min}
-                  stroke="#10b981"
-                  strokeDasharray="6 4"
-                  strokeOpacity={0.5}
-                  ifOverflow="extendDomain"
-                  label={{
-                    value: `min ${normalRange.min}`,
-                    position: 'insideBottomLeft',
-                    fill: '#10b981',
-                    fontSize: 9,
-                  }}
-                />
-                <ReferenceLine
-                  y={normalRange.max}
-                  stroke="#10b981"
-                  strokeDasharray="6 4"
-                  strokeOpacity={0.5}
-                  ifOverflow="extendDomain"
-                  label={{
-                    value: `max ${normalRange.max}`,
-                    position: 'insideTopLeft',
-                    fill: '#10b981',
-                    fontSize: 9,
-                  }}
-                />
-              </>
-            )}
             {equipmentIds.map((eqId, idx) => {
               const colorSet = EQUIPMENT_COLORS[idx % EQUIPMENT_COLORS.length]
               return (
@@ -200,6 +180,7 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
                   dot={false}
                   activeDot={{ r: 3, stroke: colorSet.stroke }}
                   name={eqId}
+                  isAnimationActive={false}
                 />
               )
             })}

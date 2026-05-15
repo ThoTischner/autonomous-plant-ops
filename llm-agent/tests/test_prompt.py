@@ -8,7 +8,7 @@ async def test_get_prompt_default(client):
     d = r.json()
     assert d["is_default"] is True
     assert "restart_equipment" in d["prompt"]
-    assert "RECOVERY" in d["prompt"]
+    assert "WIEDERANLAUF" in d["prompt"]
 
 
 async def test_put_and_reset_prompt(client):
@@ -21,7 +21,7 @@ async def test_put_and_reset_prompt(client):
     r = await client.post("/agent/prompt/reset")
     d = r.json()
     assert d["is_default"] is True
-    assert "industrial plant monitoring" in d["prompt"]
+    assert "KI-Agent zur Überwachung" in d["prompt"]
 
 
 async def test_empty_prompt_falls_back_to_default(client):

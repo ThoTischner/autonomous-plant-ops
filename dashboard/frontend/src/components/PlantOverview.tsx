@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import type { EquipmentStatus } from '../types'
 
+const STATUS_DE: Record<EquipmentStatus, string> = {
+  normal: 'Normal',
+  warning: 'Warnung',
+  critical: 'Kritisch',
+  shutdown: 'Abgeschaltet',
+}
+
 interface Props {
   equipmentStatus: Map<string, EquipmentStatus>
   connected: boolean
@@ -54,7 +61,7 @@ export default function PlantOverview({ equipmentStatus, connected }: Props) {
             <span className="text-white">Plant Ops</span>
           </div>
           <div className="text-xs text-gray-500 uppercase tracking-widest mt-1">
-            AI Monitoring
+            KI-Überwachung
           </div>
         </div>
 
@@ -65,10 +72,10 @@ export default function PlantOverview({ equipmentStatus, connected }: Props) {
           <div
             className={`w-3 h-3 rounded-full ${statusColor(overall)} ${statusPulse(overall)}`}
           />
-          <span className="text-sm text-gray-300 capitalize">{overall}</span>
+          <span className="text-sm text-gray-300">{STATUS_DE[overall]}</span>
           {equipmentCount > 0 && (
             <span className="text-xs text-gray-500">
-              ({equipmentCount} units)
+              ({equipmentCount} Anlagen)
             </span>
           )}
         </div>
@@ -90,7 +97,7 @@ export default function PlantOverview({ equipmentStatus, connected }: Props) {
             }`}
           />
           <span className="text-xs text-gray-500">
-            {connected ? 'LIVE' : 'DISCONNECTED'}
+            {connected ? 'LIVE' : 'GETRENNT'}
           </span>
         </div>
       </div>

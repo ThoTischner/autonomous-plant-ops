@@ -189,7 +189,7 @@ def test_control_trigger_then_reset(dashboard_client):
     assert r.status_code == 200
     body = r.json()
     assert body["success"] is True
-    assert set(body["equipment"]) == {"P-101", "R-201", "C-301"}
+    assert {"P-101", "R-201", "C-301"}.issubset(set(body["equipment"]))
 
 
 def test_control_prompt_roundtrip(dashboard_client):

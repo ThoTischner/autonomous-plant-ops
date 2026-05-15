@@ -47,22 +47,22 @@ export default function ActionLog({ actions }: Props) {
     <div className="h-full flex flex-col py-2 px-4">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wider">
-          Action Log
+          Aktionsprotokoll
         </h2>
-        <span className="text-[10px] text-gray-600">{actions.length} actions</span>
+        <span className="text-[10px] text-gray-600">{actions.length} Aktionen</span>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {actions.length === 0 ? (
           <div className="flex items-center justify-center w-full h-full text-sm text-gray-600">
-            No actions yet...
+            Noch keine Aktionen …
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 bg-plant-bg z-10">
               <tr className="text-[10px] uppercase tracking-wider text-gray-500">
                 <th className="px-3 py-1.5 font-medium w-[90px]">Zeit</th>
-                <th className="px-3 py-1.5 font-medium w-[90px]">Equipment</th>
+                <th className="px-3 py-1.5 font-medium w-[90px]">Anlage</th>
                 <th className="px-3 py-1.5 font-medium w-[170px]">Aktion</th>
                 <th className="px-3 py-1.5 font-medium w-[100px]">Dringlichkeit</th>
                 <th className="px-3 py-1.5 font-medium">Grund</th>

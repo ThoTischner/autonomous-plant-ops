@@ -25,8 +25,8 @@ class ErrorBoundary extends Component<
       return (
         <div className="h-screen w-screen flex items-center justify-center bg-plant-bg text-white">
           <div className="text-center p-8">
-            <h1 className="text-2xl font-bold text-plant-danger mb-4">Dashboard Error</h1>
-            <p className="text-gray-400 mb-4">Something went wrong rendering the dashboard.</p>
+            <h1 className="text-2xl font-bold text-plant-danger mb-4">Dashboard-Fehler</h1>
+            <p className="text-gray-400 mb-4">Beim Rendern des Dashboards ist ein Fehler aufgetreten.</p>
             <pre className="text-xs text-gray-500 bg-plant-card p-4 rounded-lg max-w-lg overflow-auto">
               {this.state.error?.message}
             </pre>
@@ -34,7 +34,7 @@ class ErrorBoundary extends Component<
               className="mt-4 px-4 py-2 bg-plant-accent text-white rounded-lg text-sm"
               onClick={() => this.setState({ hasError: false, error: null })}
             >
-              Try Again
+              Erneut versuchen
             </button>
           </div>
         </div>

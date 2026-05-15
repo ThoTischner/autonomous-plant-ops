@@ -11,8 +11,8 @@ def test_system_prompt_defers_ranges_to_request():
     # Ranges are injected per-request (equipment is runtime-editable), so the
     # system prompt must NOT hardcode equipment IDs/ranges anymore.
     prompt = get_system_prompt()
-    assert "NORMAL RANGES" in prompt
-    assert "provided with each request" in prompt
+    assert "NORMALBEREICHE" in prompt
+    assert "mit jeder Anfrage übergeben" in prompt
     # No hardcoded per-equipment range table anymore.
     assert "60-80°C" not in prompt
 

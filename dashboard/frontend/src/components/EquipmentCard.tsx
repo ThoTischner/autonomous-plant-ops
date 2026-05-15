@@ -1,6 +1,13 @@
 import { motion } from 'framer-motion'
 import type { SensorReading, EquipmentStatus } from '../types'
 
+const STATUS_DE: Record<EquipmentStatus, string> = {
+  normal: 'Normal',
+  warning: 'Warnung',
+  critical: 'Kritisch',
+  shutdown: 'Abgeschaltet',
+}
+
 interface Props {
   equipmentId: string
   name: string
@@ -44,9 +51,17 @@ function glowShadow(status: EquipmentStatus): string {
   }
 }
 
-function getEquipmentType(id: string): 'pump' | 'reactor' | 'compressor' {
+function getEquipmentType(
+  id: string,
+): 'pump' | 'reactor' | 'compressor' | 'vehicle' {
   if (id.startsWith('P-')) return 'pump'
   if (id.startsWith('R-')) return 'reactor'
+  if (
+    id.startsWith('FL-') ||
+    id.startsWith('TR-') ||
+    id.startsWith('AGV-')
+  )
+    return 'vehicle'
   return 'compressor'
 }
 
@@ -97,6 +112,33 @@ function EquipmentIcon({ type, status }: { type: string; status: EquipmentStatus
           cx="18" cy="20" r="1.8" fill={color} opacity={0.3}
           animate={{ cy: [20, 13, 20], opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        />
+      </svg>
+    )
+  }
+
+  if (type === 'vehicle') {
+    return (
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <rect
+          x="5" y="13" width="18" height="9" rx="1.5"
+          stroke={color} strokeWidth="2" fill="none"
+        />
+        <path
+          d="M23 16 L28 16 L31 20 L31 22 L23 22 Z"
+          stroke={color} strokeWidth="2" fill="none" strokeLinejoin="round"
+        />
+        <motion.circle
+          cx="11" cy="24" r="3" stroke={color} strokeWidth="2" fill="none"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          style={{ transformOrigin: '11px 24px' }}
+        />
+        <motion.circle
+          cx="26" cy="24" r="3" stroke={color} strokeWidth="2" fill="none"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          style={{ transformOrigin: '26px 24px' }}
         />
       </svg>
     )
@@ -158,15 +200,22 @@ export default function EquipmentCard({ equipmentId, name, status, reading }: Pr
         <span
           className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${statusBadgeColor(status)}`}
         >
-          {status}
+          {STATUS_DE[status]}
         </span>
       </div>
 
       {reading && (
-        <div className="grid grid-cols-3 gap-1 mt-1">
+        <div
+          className={`grid ${
+            reading.flow_rate != null ? 'grid-cols-4' : 'grid-cols-3'
+          } gap-1 mt-1`}
+        >
           <SensorValue label="TEMP" value={reading.temperature} unit="C" />
           <SensorValue label="PRESS" value={reading.pressure} unit="bar" />
           <SensorValue label="VIB" value={reading.vibration} unit="mm/s" />
+          {reading.flow_rate != null && (
+            <SensorValue label="FLOW" value={reading.flow_rate} unit="" />
+          )}
         </div>
       )}
     </motion.div>

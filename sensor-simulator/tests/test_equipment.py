@@ -5,6 +5,8 @@ import pytest
 from src import equipment as eq
 from src.simulator import simulator
 
+DEFAULT_IDS = {"P-101", "R-201", "C-301", "FL-401", "TR-501", "AGV-601"}
+
 NEW = {
     "equipment_id": "T-900",
     "name": "Test Unit",
@@ -33,7 +35,7 @@ async def test_list_defaults(client):
     r = await client.get("/equipment")
     assert r.status_code == 200
     ids = {e["equipment_id"] for e in r.json()}
-    assert ids == {"P-101", "R-201", "C-301"}
+    assert ids == DEFAULT_IDS
 
 
 async def test_add_then_simulated(client):
@@ -67,9 +69,10 @@ async def test_delete_and_guard_last(client):
     assert "T-900" not in simulator.history
 
     # Delete down to one, last delete must be blocked.
-    await client.delete("/equipment/P-101")
-    await client.delete("/equipment/R-201")
-    last = await client.delete("/equipment/C-301")
+    ids = [e["equipment_id"] for e in (await client.get("/equipment")).json()]
+    for eid in ids[:-1]:
+        assert (await client.delete(f"/equipment/{eid}")).status_code == 200
+    last = await client.delete(f"/equipment/{ids[-1]}")
     assert last.status_code == 400
 
 
@@ -87,5 +90,5 @@ async def test_reset_endpoint(client):
     r = await client.post("/equipment/reset")
     assert r.status_code == 200
     ids = {e["equipment_id"] for e in r.json()}
-    assert ids == {"P-101", "R-201", "C-301"}
+    assert ids == DEFAULT_IDS
     assert "T-900" not in simulator.history

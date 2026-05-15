@@ -68,4 +68,4 @@ async def test_reset_restores_normal(client):
     body = resp.json()
     assert body["success"] is True
     assert "R-201" in body["equipment"]
-    assert len(body["equipment"]) == 3
+    assert len(body["equipment"]) >= 3
