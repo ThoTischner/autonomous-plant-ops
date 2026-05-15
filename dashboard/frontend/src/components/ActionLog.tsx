@@ -17,6 +17,29 @@ function urgencyBadge(urgency: string): string {
   }
 }
 
+const ACTION_DE: Record<string, string> = {
+  increase_cooling: 'Kühlung erhöhen',
+  reduce_speed: 'Drehzahl reduzieren',
+  shutdown_equipment: 'Notabschaltung',
+  restart_equipment: 'Wiederanlauf',
+  adjust_setpoint: 'Sollwert anpassen',
+  alert_operator: 'Bediener alarmieren',
+  no_action: 'Keine Aktion',
+}
+
+function actionLabel(action: string): string {
+  return ACTION_DE[action] ?? action
+}
+
+// restart_equipment is the recovery milestone — highlight it distinctly.
+function actionStyle(action: string): string {
+  if (action === 'restart_equipment')
+    return 'text-plant-success font-bold'
+  if (action === 'shutdown_equipment')
+    return 'text-plant-danger font-semibold'
+  return 'text-gray-200 font-semibold'
+}
+
 function equipmentTagColor(equipmentId: string): string {
   const hash = equipmentId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
   const colors = [
@@ -84,8 +107,8 @@ export default function ActionLog({ actions }: Props) {
                       {action.equipment_id}
                     </span>
                   </td>
-                  <td className="px-3 py-1.5 text-xs font-semibold text-gray-200">
-                    {action.action}
+                  <td className={`px-3 py-1.5 text-xs ${actionStyle(action.action)}`}>
+                    {actionLabel(action.action)}
                   </td>
                   <td className="px-3 py-1.5">
                     {action.urgency && (

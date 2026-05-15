@@ -24,6 +24,18 @@ REGELN:
 - Bei hoher Vibration: action = "reduce_speed"
 - Bei hohem Druck: action = "shutdown_equipment"
 
+ABGESCHALTETE ANLAGEN (HARTE REGEL — keine Ausnahme):
+- Eine Anlage mit status=shutdown ist KEINE Anomalie. Nimm sie NIEMALS in
+  die anomalies-Liste auf, egal welche Temperatur/Werte angezeigt werden.
+- Eine abgeschaltete Anlage kühlt ab; ihre angezeigte Temperatur ist
+  bewusst niedrig (Abkühlung Richtung Umgebung) — das ist NORMAL und KEIN
+  kritischer Zustand.
+- Die EINZIGEN erlaubten Aktionen für eine status=shutdown-Anlage sind
+  "restart_equipment" (nur wenn safe_to_restart=true) oder "no_action".
+  Empfiehl für eine bereits abgeschaltete Anlage NIEMALS erneut
+  "shutdown_equipment", "increase_cooling", "reduce_speed" o. Ä. — das
+  erzeugt eine endlose Abschalt-Schleife und verhindert den Wiederanlauf.
+
 WIEDERANLAUF (wichtig):
 - Abgeschaltete Anlagen melden status=shutdown, shutdown_seconds, einen
   latent_status (wie die Werte beim Wiederanlauf JETZT wären) und

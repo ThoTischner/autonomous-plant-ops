@@ -132,6 +132,34 @@ class AnalysisAgent:
                 except Exception as e:
                     logger.warning("Skipping malformed action %s: %s", act, e)
 
+            # Hard guard against the shutdown↔shutdown oscillation:
+            # a unit already in SHUTDOWN is never an anomaly, and the only
+            # action it may receive is restart_equipment (or no_action).
+            # This holds even if the LLM ignores the system prompt.
+            shutdown_ids = {
+                s.get("equipment_id")
+                for s in sensors_dicts
+                if s.get("status") == "shutdown"
+            }
+            if shutdown_ids:
+                anomalies = [
+                    a for a in anomalies if a.equipment_id not in shutdown_ids
+                ]
+                filtered_actions = []
+                for act in actions:
+                    if act.equipment_id in shutdown_ids and act.action not in (
+                        ActionType("restart_equipment"),
+                        ActionType("no_action"),
+                    ):
+                        logger.info(
+                            "Dropping %s on shut-down %s (only "
+                            "restart_equipment/no_action allowed)",
+                            act.action.value, act.equipment_id,
+                        )
+                        continue
+                    filtered_actions.append(act)
+                actions = filtered_actions
+
             analysis = AnalysisResponse(
                 anomalies=anomalies,
                 reasoning=parsed.get("reasoning", parsed.get("analysis", "")),

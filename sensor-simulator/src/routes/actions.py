@@ -30,9 +30,23 @@ async def execute_action(req: ActionRequest):
 
     match req.action:
         case ActionType.SHUTDOWN_EQUIPMENT:
-            cfg.is_shutdown = True
-            cfg.shutdown_at = time.time()
-            msg = f"{cfg.name} shut down"
+            if cfg.is_shutdown:
+                # Idempotent: re-shutting-down an already-stopped unit must
+                # NOT reset shutdown_at — doing so restarts the cool-down
+                # clock and re-spikes the displayed temperature, trapping
+                # recovery in a shutdown↔shutdown oscillation.
+                elapsed = (
+                    time.time() - cfg.shutdown_at
+                    if cfg.shutdown_at is not None else 0.0
+                )
+                msg = (
+                    f"{cfg.name} ist bereits seit {elapsed:.0f}s "
+                    f"abgeschaltet — keine erneute Abschaltung nötig"
+                )
+            else:
+                cfg.is_shutdown = True
+                cfg.shutdown_at = time.time()
+                msg = f"{cfg.name} shut down"
 
         case ActionType.RESTART_EQUIPMENT:
             # Throttled restart: back online but at reduced load with extra
