@@ -72,8 +72,7 @@ services:
       - plant-net
     restart: unless-stopped
 
-volumes:
-  # n8n-data:  # deaktiviert zusammen mit dem n8n-Service
+# Keine Volumes mehr noetig (n8n-data entfiel mit dem n8n-Service).
 
 networks:
   plant-net:
