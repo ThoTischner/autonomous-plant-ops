@@ -1,5 +1,10 @@
 import { motion } from 'framer-motion'
-import type { SensorReading, EquipmentStatus } from '../types'
+import type {
+  SensorReading,
+  EquipmentStatus,
+  EquipmentDef,
+  SensorRangeDef,
+} from '../types'
 
 const STATUS_DE: Record<EquipmentStatus, string> = {
   normal: 'Normal',
@@ -13,6 +18,7 @@ interface Props {
   name: string
   status: EquipmentStatus
   reading?: SensorReading
+  def?: EquipmentDef
 }
 
 function statusColor(status: EquipmentStatus): string {
@@ -176,7 +182,7 @@ function EquipmentIcon({ type, status }: { type: string; status: EquipmentStatus
   )
 }
 
-export default function EquipmentCard({ equipmentId, name, status, reading }: Props) {
+export default function EquipmentCard({ equipmentId, name, status, reading, def }: Props) {
   const type = getEquipmentType(equipmentId)
 
   return (
@@ -212,11 +218,11 @@ export default function EquipmentCard({ equipmentId, name, status, reading }: Pr
             reading.flow_rate != null ? 'grid-cols-4' : 'grid-cols-3'
           } gap-1 mt-1`}
         >
-          <SensorValue label="TEMP" value={reading.temperature} unit="C" />
-          <SensorValue label="PRESS" value={reading.pressure} unit="bar" />
-          <SensorValue label="VIB" value={reading.vibration} unit="mm/s" />
+          <SensorValue label="TEMP" value={reading.temperature} unit="°C" range={def?.temperature} />
+          <SensorValue label="PRESS" value={reading.pressure} unit="bar" range={def?.pressure} />
+          <SensorValue label="VIB" value={reading.vibration} unit="mm/s" range={def?.vibration} />
           {reading.flow_rate != null && (
-            <SensorValue label="FLOW" value={reading.flow_rate} unit="" />
+            <SensorValue label="FLOW" value={reading.flow_rate} unit="" range={def?.flow_rate ?? undefined} />
           )}
         </div>
       )}
@@ -224,14 +230,43 @@ export default function EquipmentCard({ equipmentId, name, status, reading }: Pr
   )
 }
 
-function SensorValue({ label, value, unit }: { label: string; value?: number; unit: string }) {
+function fmt(n: number): string {
+  // Trim trailing zeros so "5.0" shows as "5".
+  return Number.isInteger(n) ? String(n) : String(+n.toFixed(1))
+}
+
+function SensorValue({
+  label,
+  value,
+  unit,
+  range,
+}: {
+  label: string
+  value?: number
+  unit: string
+  range?: SensorRangeDef
+}) {
+  const outOfRange =
+    value != null && range != null && (value < range.min || value > range.max)
   return (
     <div className="text-center">
       <div className="text-[9px] text-gray-500 uppercase">{label}</div>
-      <div className="text-xs font-mono text-gray-300">
+      <div
+        className={`text-xs font-mono ${
+          outOfRange ? 'text-plant-warning font-bold' : 'text-gray-300'
+        }`}
+      >
         {value != null ? value.toFixed(1) : '--'}
         <span className="text-[9px] text-gray-600 ml-0.5">{unit}</span>
       </div>
+      {range != null && (
+        <div
+          className="text-[9px] text-gray-600 font-mono leading-tight"
+          title={`Gutbereich: ${fmt(range.min)}–${fmt(range.max)} ${unit}`}
+        >
+          {fmt(range.min)}–{fmt(range.max)}
+        </div>
+      )}
     </div>
   )
 }
