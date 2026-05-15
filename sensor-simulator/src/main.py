@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import actions, scenarios, sensors
+from .routes import actions, equipment, scenarios, sensors
 from .simulator import simulator
 
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +37,7 @@ app.add_middleware(
 app.include_router(sensors.router)
 app.include_router(actions.router)
 app.include_router(scenarios.router)
+app.include_router(equipment.router)
 
 
 @app.get("/health")

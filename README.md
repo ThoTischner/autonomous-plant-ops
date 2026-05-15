@@ -44,6 +44,7 @@ Der Reactor R-201 durchlaeuft ein *Thermal Runaway*-Szenario. Die Temperatur ste
 - **Vollautomatische Demo** — Orchestrator triggert zufaellige Szenarien, der KI-Agent reagiert live
 - **Autonome Recovery** — der Agent schaltet bei Gefahr ab und fährt nach Cooldown selbstständig wieder hoch (`restart_equipment`)
 - **Dashboard-Steuerung** — Szenario-Buttons, Reset auf Normalbetrieb und ein live editierbarer System-Prompt direkt im UI
+- **Equipment per UI** — Anlagen zur Laufzeit hinzufügen/ändern/löschen (Typ, Sensorbereiche); persistent (Volume/PVC); der Agent erhält die Bereiche dynamisch
 - **Vollstaendig containerisiert** — Ein `docker compose up --build` und alles laeuft
 
 ---

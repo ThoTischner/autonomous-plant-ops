@@ -52,6 +52,14 @@ def page_session():
         textarea.fill(textarea.input_value() + "\n# e2e marker")
         page.get_by_role("button", name="Speichern").click(timeout=8000)
         page.wait_for_timeout(2000)
+        page.get_by_role("button", name="Schließen").click(timeout=8000)
+        page.wait_for_timeout(1000)
+
+        # Open the Equipment modal (list loads via /api/control/equipment).
+        page.get_by_role("button", name="Equipment", exact=True).click(timeout=8000)
+        page.wait_for_timeout(2000)
+        page.get_by_role("button", name="Schließen").click(timeout=8000)
+        page.wait_for_timeout(1500)
 
         browser.close()
 

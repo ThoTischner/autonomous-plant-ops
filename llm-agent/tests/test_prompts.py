@@ -7,11 +7,14 @@ def test_get_system_prompt_not_empty():
     assert len(prompt) > 100
 
 
-def test_get_system_prompt_contains_equipment_info():
+def test_system_prompt_defers_ranges_to_request():
+    # Ranges are injected per-request (equipment is runtime-editable), so the
+    # system prompt must NOT hardcode equipment IDs/ranges anymore.
     prompt = get_system_prompt()
-    assert "P-101" in prompt
-    assert "R-201" in prompt
-    assert "C-301" in prompt
+    assert "NORMAL RANGES" in prompt
+    assert "provided with each request" in prompt
+    # No hardcoded per-equipment range table anymore.
+    assert "60-80°C" not in prompt
 
 
 def test_get_system_prompt_contains_json_structure():

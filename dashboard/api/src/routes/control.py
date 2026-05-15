@@ -68,3 +68,30 @@ async def put_prompt(body: PromptBody):
 @router.post("/prompt/reset")
 async def reset_prompt():
     return await _proxy("POST", f"{AGENT_URL}/agent/prompt/reset")
+
+
+# --- Equipment CRUD passthrough (-> sensor-simulator) ---
+
+@router.get("/equipment")
+async def list_equipment():
+    return await _proxy("GET", f"{SENSOR_URL}/equipment")
+
+
+@router.post("/equipment")
+async def add_equipment(payload: dict):
+    return await _proxy("POST", f"{SENSOR_URL}/equipment", json=payload)
+
+
+@router.put("/equipment/{eid}")
+async def update_equipment(eid: str, payload: dict):
+    return await _proxy("PUT", f"{SENSOR_URL}/equipment/{eid}", json=payload)
+
+
+@router.delete("/equipment/{eid}")
+async def delete_equipment(eid: str):
+    return await _proxy("DELETE", f"{SENSOR_URL}/equipment/{eid}")
+
+
+@router.post("/equipment/reset")
+async def reset_equipment():
+    return await _proxy("POST", f"{SENSOR_URL}/equipment/reset")

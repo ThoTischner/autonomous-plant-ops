@@ -1,5 +1,21 @@
 export type EquipmentStatus = 'normal' | 'warning' | 'critical' | 'shutdown'
 
+export interface SensorRangeDef {
+  min: number
+  max: number
+  unit: string
+}
+
+export interface EquipmentDef {
+  equipment_id: string
+  name: string
+  etype: string
+  temperature: SensorRangeDef
+  pressure: SensorRangeDef
+  vibration: SensorRangeDef
+  flow_rate: SensorRangeDef | null
+}
+
 export interface SensorReading {
   equipment_id: string
   equipment_name: string
