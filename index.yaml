@@ -4,6 +4,60 @@ entries:
   - annotations:
       artifacthub.io/category: monitoring-logging
       artifacthub.io/changes: |
+        - kind: security
+          description: "CVE-2025-62727 behoben: starlette auf 0.49.1, fastapi auf 0.136.1 in allen FastAPI-Services (DoS via Range-Header)"
+        - kind: security
+          description: "CVE-2026-4800 behoben: lodash auf 4.18.1 (RCE, transitiv via recharts); vite 6.4.2, postcss 8.5.14"
+        - kind: added
+          description: "CI: Trivy-Scans (FS+Images), CodeQL (SAST), SBOM (SPDX) und Dependabot ergänzt"
+        - kind: fixed
+          description: "Wiederanlauf-Oszillation und Hochlauf-Transient behoben; deterministischer In-Range-Schutz und Auto-Wiederanlauf"
+      artifacthub.io/containsSecurityUpdates: "true"
+      artifacthub.io/images: |
+        - name: sensor-simulator
+          image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.2
+        - name: llm-agent
+          image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.2
+        - name: orchestrator
+          image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.2
+        - name: dashboard-api
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.2
+        - name: dashboard-frontend
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.2
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: Quellcode
+          url: https://github.com/ThoTischner/autonomous-plant-ops
+        - name: Support
+          url: https://github.com/ThoTischner/autonomous-plant-ops/issues
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
+    appVersion: 1.0.2
+    created: "2026-05-15T23:10:20.051784167Z"
+    description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor
+      Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
+    digest: 89ba52198c96ed6c2857931e968f1e63a843d40a3e9074e13b188fb1bdd435bb
+    home: https://github.com/ThoTischner/autonomous-plant-ops
+    icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
+    keywords:
+    - llm
+    - ollama
+    - industrial-monitoring
+    - fastapi
+    - observability
+    maintainers:
+    - name: ThoTischner
+      url: https://github.com/ThoTischner
+    name: autonomous-plant-ops
+    sources:
+    - https://github.com/ThoTischner/autonomous-plant-ops
+    type: application
+    urls:
+    - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.2.2/autonomous-plant-ops-0.2.2.tgz
+    version: 0.2.2
+  - annotations:
+      artifacthub.io/category: monitoring-logging
+      artifacthub.io/changes: |
         - kind: fixed
           description: "Wiederanlauf-Oszillation behoben: abgeschaltete Anlagen werden nicht erneut notabgeschaltet; deterministischer Auto-Wiederanlauf nach Abkühlung"
         - kind: fixed
@@ -151,4 +205,4 @@ entries:
     urls:
     - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.1.0/autonomous-plant-ops-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-15T22:37:22.106147886Z"
+generated: "2026-05-15T23:10:20.051807672Z"
