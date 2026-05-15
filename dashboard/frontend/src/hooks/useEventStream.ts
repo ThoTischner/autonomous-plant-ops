@@ -58,7 +58,11 @@ export function useEventStream() {
     setAnalyses((prev) => [analysis, ...prev].slice(0, MAX_ANALYSES))
 
     if (analysis.actions && analysis.actions.length > 0) {
-      setActions((prev) => [...analysis.actions, ...prev].slice(0, MAX_ACTIONS))
+      const stamped = analysis.actions.map((a) => ({
+        ...a,
+        timestamp: a.timestamp || analysis.timestamp || new Date().toISOString(),
+      }))
+      setActions((prev) => [...stamped, ...prev].slice(0, MAX_ACTIONS))
     }
 
     // Update equipment status from anomalies
@@ -78,7 +82,11 @@ export function useEventStream() {
   }, [])
 
   const handleActionExecuted = useCallback((action: RecommendedAction) => {
-    setActions((prev) => [action, ...prev].slice(0, MAX_ACTIONS))
+    const stamped = {
+      ...action,
+      timestamp: action.timestamp || new Date().toISOString(),
+    }
+    setActions((prev) => [stamped, ...prev].slice(0, MAX_ACTIONS))
   }, [])
 
   const connect = useCallback(() => {

@@ -28,11 +28,16 @@ function formatTimestamp(ts: string): string {
 export default function AgentFeed({ analyses }: Props) {
   return (
     <div className="py-3 h-full flex flex-col">
-      <div className="px-4 mb-3 flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-plant-accent animate-pulse" />
-        <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wider">
-          AI Agent Feed
-        </h2>
+      <div className="px-4 mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-plant-accent animate-pulse" />
+          <h2 className="text-base font-bold text-white uppercase tracking-wider">
+            AI Agent Feed
+          </h2>
+        </div>
+        <p className="text-[11px] text-gray-500 mt-0.5 ml-[18px]">
+          Was erkennt der Agent — und wie reagiert er?
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 space-y-2">
@@ -59,7 +64,7 @@ export default function AgentFeed({ analyses }: Props) {
                 </div>
 
                 {analysis.reasoning && (
-                  <p className="text-xs text-gray-300 leading-relaxed mb-2">
+                  <p className="text-sm text-gray-200 leading-relaxed mb-2">
                     {analysis.reasoning}
                   </p>
                 )}

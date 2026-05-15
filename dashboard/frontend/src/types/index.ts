@@ -25,6 +25,8 @@ export interface RecommendedAction {
   reason: string
   urgency: string
   parameters?: Record<string, unknown>
+  timestamp?: string
+  message?: string
 }
 
 export interface AgentAnalysis {

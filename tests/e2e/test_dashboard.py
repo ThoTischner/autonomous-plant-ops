@@ -35,15 +35,23 @@ def page_session():
         page.goto(FRONTEND, wait_until="domcontentloaded", timeout=20000)
         page.wait_for_timeout(4000)
 
-        # Exercise the Control Panel.
-        page.get_by_text("Thermal Runaway").click(timeout=8000)
+        # Exercise the control bar (top toolbar).
+        page.get_by_role("button", name="Thermal Runaway").click(timeout=8000)
         page.wait_for_timeout(2000)
-        page.get_by_text("Normalzustand wiederherstellen").click(timeout=8000)
+        page.get_by_role(
+            "button", name="Normalzustand wiederherstellen", exact=False
+        ).click(timeout=8000)
         page.wait_for_timeout(2000)
+
+        # Open the System-Prompt modal, edit and save.
+        page.get_by_role(
+            "button", name="System-Prompt", exact=False
+        ).click(timeout=8000)
         textarea = page.locator("textarea")
+        textarea.wait_for(state="visible", timeout=8000)
         textarea.fill(textarea.input_value() + "\n# e2e marker")
-        page.get_by_text("Speichern", exact=True).click(timeout=8000)
-        page.wait_for_timeout(3000)
+        page.get_by_role("button", name="Speichern").click(timeout=8000)
+        page.wait_for_timeout(2000)
 
         browser.close()
 
