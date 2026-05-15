@@ -187,16 +187,16 @@ export default function EquipmentCard({ equipmentId, name, status, reading }: Pr
       className={`mx-3 mb-2 p-3 rounded-lg border ${statusColor(status)} ${statusBg(status)} bg-plant-card`}
       style={{ boxShadow: glowShadow(status) }}
     >
-      <div className="flex items-center justify-between gap-2 mb-2">
+      <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="shrink-0">
             <EquipmentIcon type={type} status={status} />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-white truncate" title={name || equipmentId}>
+            <div className="text-sm font-semibold text-white leading-tight break-words">
               {name || equipmentId}
             </div>
-            <div className="text-[10px] text-gray-500 font-mono truncate">{equipmentId}</div>
+            <div className="text-[10px] text-gray-500 font-mono break-all">{equipmentId}</div>
           </div>
         </div>
         <span
