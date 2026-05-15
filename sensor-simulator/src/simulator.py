@@ -174,6 +174,8 @@ class Simulator:
             if abs(cfg.cooling_factor - 1.0) < 0.01:
                 cfg.cooling_factor = 1.0
 
+        ramping = cfg.speed_factor != 1.0 or cfg.cooling_factor != 1.0
+
         temp, pres, vib, flow = self._raw_values(cfg, equipment_id)
         reading = SensorReading(
             equipment_id=equipment_id,
@@ -182,6 +184,7 @@ class Simulator:
             pressure=pres,
             vibration=vib,
             flow_rate=flow,
+            ramping_up=ramping or None,
         )
         reading.status = _determine_status(reading, cfg)
 

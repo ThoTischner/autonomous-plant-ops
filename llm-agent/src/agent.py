@@ -211,24 +211,29 @@ class AnalysisAgent:
                 ActionType("increase_cooling"),
                 ActionType("adjust_setpoint"),
             }
-            normal_ids = {
+            # Healthy units AND units in the controlled post-restart ramp:
+            # a freshly restarted unit reads an artificially low temperature
+            # while throttled cooling/load glide back to nominal — that is
+            # an expected startup transient, not a fault, and must never be
+            # answered with another shutdown.
+            protected_ids = {
                 s.get("equipment_id")
                 for s in sensors_dicts
-                if s.get("status") == "normal"
+                if s.get("status") == "normal" or s.get("ramping_up") is True
             }
-            if normal_ids:
+            if protected_ids:
                 anomalies = [
-                    a for a in anomalies if a.equipment_id not in normal_ids
+                    a for a in anomalies if a.equipment_id not in protected_ids
                 ]
                 kept = []
                 for act in actions:
                     if (
-                        act.equipment_id in normal_ids
+                        act.equipment_id in protected_ids
                         and act.action in DISRUPTIVE
                     ):
                         logger.info(
-                            "Dropping %s on healthy %s (sensor status=normal "
-                            "— LLM misjudged an in-range value)",
+                            "Dropping %s on %s (healthy or ramping up — "
+                            "LLM misjudged a transient/in-range value)",
                             act.action.value, act.equipment_id,
                         )
                         continue

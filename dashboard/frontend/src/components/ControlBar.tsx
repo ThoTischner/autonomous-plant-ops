@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import EquipmentModal from './EquipmentModal'
 
 const API = '/api'
@@ -41,6 +41,20 @@ export default function ControlBar() {
   const [scenarios, setScenarios] = useState<string[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
+  // Transient confirmation: { id, ok } — flashes the clicked button and a
+  // toast for a few seconds after a scenario / reset action.
+  const [flash, setFlash] = useState<{ id: string; ok: boolean } | null>(null)
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function showFlash(id: string, ok: boolean) {
+    if (flashTimer.current) clearTimeout(flashTimer.current)
+    setFlash({ id, ok })
+    flashTimer.current = setTimeout(() => setFlash(null), 3000)
+  }
+
+  useEffect(() => () => {
+    if (flashTimer.current) clearTimeout(flashTimer.current)
+  }, [])
 
   const [equipOpen, setEquipOpen] = useState(false)
   const [promptOpen, setPromptOpen] = useState(false)
@@ -77,9 +91,12 @@ export default function ControlBar() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scenario: name }),
       })
-      setMsg((await r.json()).message ?? `${name} ausgelöst`)
+      const m = (await r.json()).message
+      setMsg(m ?? `Szenario „${scenarioLabel(name)}" ausgelöst`)
+      showFlash(name, r.ok)
     } catch {
-      setMsg('Fehler beim Auslösen')
+      setMsg(`Fehler beim Auslösen von „${scenarioLabel(name)}"`)
+      showFlash(name, false)
     } finally {
       setBusy(null)
     }
@@ -90,9 +107,11 @@ export default function ControlBar() {
     setMsg('')
     try {
       const r = await fetch(`${API}/control/reset`, { method: 'POST' })
-      setMsg((await r.json()).message ?? 'Zurückgesetzt')
+      setMsg((await r.json()).message ?? 'Normalzustand wiederhergestellt')
+      showFlash('reset', r.ok)
     } catch {
       setMsg('Fehler beim Zurücksetzen')
+      showFlash('reset', false)
     } finally {
       setBusy(null)
     }
@@ -137,20 +156,39 @@ export default function ControlBar() {
       </span>
       {list.map((s) => {
         const desc = SCENARIO_META[s]?.desc
+        const flashed = flash?.id === s
+        const flashOk = flashed && flash?.ok
+        const flashErr = flashed && !flash?.ok
         return (
           <div
             key={s}
-            className="flex items-center rounded-md bg-plant-card border border-plant-border
-                       hover:border-plant-warning transition-colors overflow-hidden"
+            className={`flex items-center rounded-md border transition-colors overflow-hidden ${
+              flashOk
+                ? 'bg-plant-success/20 border-plant-success'
+                : flashErr
+                  ? 'bg-plant-danger/20 border-plant-danger'
+                  : 'bg-plant-card border-plant-border hover:border-plant-warning'
+            }`}
           >
             <button
               onClick={() => trigger(s)}
               disabled={busy !== null}
               title={desc}
-              className="px-2.5 py-1 text-xs hover:text-plant-warning
-                         disabled:opacity-50 transition-colors"
+              className={`px-2.5 py-1 text-xs disabled:opacity-50 transition-colors ${
+                flashOk
+                  ? 'text-plant-success font-semibold'
+                  : flashErr
+                    ? 'text-plant-danger font-semibold'
+                    : 'hover:text-plant-warning'
+              }`}
             >
-              {busy === s ? '…' : scenarioLabel(s)}
+              {busy === s
+                ? '…'
+                : flashOk
+                  ? `✓ ${scenarioLabel(s)}`
+                  : flashErr
+                    ? `✕ ${scenarioLabel(s)}`
+                    : scenarioLabel(s)}
             </button>
             {desc && (
               <span
@@ -170,11 +208,18 @@ export default function ControlBar() {
       <button
         onClick={resetPlant}
         disabled={busy !== null}
-        className="px-2.5 py-1 text-xs rounded-md bg-plant-success/15
-                   border border-plant-success/40 text-plant-success
-                   hover:bg-plant-success/25 disabled:opacity-50 transition-colors"
+        className={`px-2.5 py-1 text-xs rounded-md border transition-colors
+                   disabled:opacity-50 ${
+          flash?.id === 'reset' && flash?.ok
+            ? 'bg-plant-success/30 border-plant-success text-plant-success font-semibold'
+            : 'bg-plant-success/15 border-plant-success/40 text-plant-success hover:bg-plant-success/25'
+        }`}
       >
-        {busy === 'reset' ? '…' : '↺ Normalzustand wiederherstellen'}
+        {busy === 'reset'
+          ? '…'
+          : flash?.id === 'reset' && flash?.ok
+            ? '✓ Normalzustand wiederhergestellt'
+            : '↺ Normalzustand wiederherstellen'}
       </button>
 
       <div className="h-5 w-px bg-plant-border mx-1" />
@@ -205,7 +250,17 @@ export default function ControlBar() {
       </button>
 
       {msg && (
-        <span className="text-[11px] text-gray-500 ml-1 max-w-[260px] truncate">
+        <span
+          className={`ml-1 px-2 py-1 rounded-md text-[11px] max-w-[320px] truncate
+                     border transition-colors ${
+            flash && !flash.ok
+              ? 'bg-plant-danger/15 border-plant-danger/40 text-plant-danger'
+              : flash
+                ? 'bg-plant-success/15 border-plant-success/40 text-plant-success'
+                : 'bg-plant-card border-plant-border text-gray-400'
+          }`}
+          title={msg}
+        >
           {msg}
         </span>
       )}

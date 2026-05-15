@@ -49,6 +49,11 @@ WIEDERANLAUF (wichtig):
 - Nach dem Neustart fährt die Anlage automatisch GEDROSSELT wieder hoch
   (reduzierte Last, erhöhte Kühlung) und normalisiert sich langsam — das
   ist gewollt, nicht erneut eingreifen, solange die Werte sich erholen.
+- Eine Anlage mit ramping_up=true ist in genau diesem gedrosselten
+  Hochlauf. Die Temperatur ist dabei anfangs ZU NIEDRIG (starke Kühlung,
+  halbe Last) — das ist ein erwarteter Anlauftransient, KEIN kritischer
+  Zustand. Für ramping_up=true IMMER nur no_action; niemals
+  shutdown_equipment/increase_cooling/reduce_speed.
 - Lass Anlagen NICHT unbegrenzt abgeschaltet — die Wiederherstellung des
   Normalbetriebs ist Teil deiner Aufgabe.
 
@@ -122,6 +127,12 @@ def build_user_prompt(
         if s.get("flow_rate") is not None:
             line += f", flow_rate={s['flow_rate']}"
         line += f" [status={s.get('status')}]"
+        if s.get("ramping_up") is True:
+            line += (
+                " (WIEDERANLAUF aktiv — kontrollierter, gedrosselter "
+                "Hochlauf; niedrige/abweichende Werte sind ein erwarteter "
+                "Anlauftransient, NICHT eingreifen, nur no_action)"
+            )
         parts.append(line)
 
     if history:

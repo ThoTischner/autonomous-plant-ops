@@ -81,12 +81,12 @@ export function useEventStream() {
     }
   }, [])
 
-  const handleActionExecuted = useCallback((action: RecommendedAction) => {
-    const stamped = {
-      ...action,
-      timestamp: action.timestamp || new Date().toISOString(),
-    }
-    setActions((prev) => [stamped, ...prev].slice(0, MAX_ACTIONS))
+  // NOTE: the action log is fed solely from agent_analysis (German reason,
+  // timezone-correct ISO timestamp). The action_executed events carry the
+  // English server message and a naive-UTC timestamp (off by the local
+  // offset), which previously produced duplicate, time-shifted rows.
+  const handleActionExecuted = useCallback((_action: RecommendedAction) => {
+    // intentionally not added to the action log (deduplicated)
   }, [])
 
   const connect = useCallback(() => {
