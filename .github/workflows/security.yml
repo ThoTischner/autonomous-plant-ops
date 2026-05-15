@@ -1,0 +1,121 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly Monday 05:11 UTC — catches newly disclosed CVEs in pinned deps
+    - cron: "11 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  # Fast, runs on every change: dependency CVEs, leaked secrets, IaC/Dockerfile
+  # misconfigurations across the whole repo.
+  trivy-fs:
+    name: "Trivy — filesystem (deps, secrets, misconfig)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan (SARIF -> Security tab)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-fs.sarif
+          severity: HIGH,CRITICAL
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+      - name: Trivy filesystem scan (gate — fail on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  # Heavier: build each service image, scan it for OS+lib CVEs and emit an
+  # SBOM. Skipped on PRs to save CI minutes (covered on main / tags / weekly).
+  image-scan:
+    name: "Trivy + SBOM — ${{ matrix.name }}"
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: sensor-simulator,   context: sensor-simulator }
+          - { name: llm-agent,          context: llm-agent }
+          - { name: orchestrator,       context: orchestrator }
+          - { name: dashboard-api,      context: dashboard/api }
+          - { name: dashboard-frontend, context: dashboard/frontend }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t ${{ matrix.name }}:scan ${{ matrix.context }}/
+
+      - name: Trivy image scan (SARIF -> Security tab)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ${{ matrix.name }}:scan
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          severity: HIGH,CRITICAL
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.name }}.sarif
+          category: trivy-image-${{ matrix.name }}
+
+      - name: Generate SBOM (Syft, SPDX-JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ matrix.name }}:scan
+          format: spdx-json
+          artifact-name: sbom-${{ matrix.name }}.spdx.json
+          output-file: sbom-${{ matrix.name }}.spdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.name }}
+          path: sbom-${{ matrix.name }}.spdx.json
+          retention-days: 90
+
+      - name: Trivy image scan (gate — fail on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ${{ matrix.name }}:scan
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
