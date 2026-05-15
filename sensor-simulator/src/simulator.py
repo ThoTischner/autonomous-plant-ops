@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
-from datetime import datetime
 
 import numpy as np
 

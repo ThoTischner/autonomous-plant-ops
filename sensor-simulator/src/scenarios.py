@@ -4,7 +4,6 @@ import asyncio
 import logging
 from typing import Callable, Coroutine
 
-from .equipment import EQUIPMENT
 from .simulator import simulator
 
 logger = logging.getLogger(__name__)

@@ -6,7 +6,14 @@ from datetime import datetime, timezone
 from ollama import AsyncClient
 
 from .context import RollingContext
-from .models import AnalysisRequest, AnalysisResponse, Anomaly, RecommendedAction
+from .models import (
+    ActionType,
+    AnalysisRequest,
+    AnalysisResponse,
+    Anomaly,
+    RecommendedAction,
+    Severity,
+)
 from .prompts import build_user_prompt, get_system_prompt
 
 logger = logging.getLogger(__name__)
@@ -42,7 +49,7 @@ def _normalize_anomaly(raw: dict) -> Anomaly:
         sensor=sensor,
         value=value,
         normal_range=str(nr),
-        severity=severity,
+        severity=Severity(severity),
     )
 
 
@@ -66,9 +73,9 @@ def _normalize_action(raw: dict) -> RecommendedAction:
 
     return RecommendedAction(
         equipment_id=equipment_id,
-        action=action,
+        action=ActionType(action),
         reason=reason,
-        urgency=urgency,
+        urgency=Severity(urgency),
         parameters=parameters,
     )
 

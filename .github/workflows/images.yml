@@ -25,19 +25,19 @@ jobs:
         include:
           - name: sensor-simulator
             context: sensor-simulator
-            test: true
+            test: "true"
           - name: llm-agent
             context: llm-agent
-            test: true
+            test: "true"
           - name: dashboard-api
             context: dashboard/api
-            test: true
+            test: "true"
           - name: dashboard-frontend
             context: dashboard/frontend
-            test: frontend
+            test: "frontend"
           - name: orchestrator
             context: orchestrator
-            test: false
+            test: "false"
     steps:
       - uses: actions/checkout@v4
 
