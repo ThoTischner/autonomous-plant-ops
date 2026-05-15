@@ -1,0 +1,99 @@
+{{- if eq .Values.ollama.mode "in-cluster" }}
+{{- $o := .Values.ollama.inCluster }}
+{{- if $o.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models
+  labels:
+    {{- include "apo.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $o.persistence.size }}
+  {{- if $o.persistence.storageClass }}
+  storageClassName: {{ $o.persistence.storageClass }}
+  {{- end }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  labels:
+    {{- include "apo.labels" . | nindent 4 }}
+    {{- include "apo.selectorLabels" "ollama" | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "apo.selectorLabels" "ollama" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "apo.selectorLabels" "ollama" | nindent 8 }}
+    spec:
+      {{- with $o.gpu }}
+      {{- if .enabled }}
+      {{- with .nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      containers:
+        - name: ollama
+          image: {{ $o.image }}
+          imagePullPolicy: {{ $o.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $o.port }}
+          resources:
+            {{- $res := $o.resources | default dict }}
+            {{- if $o.gpu.enabled }}
+            limits:
+              {{ $o.gpu.resourceName }}: {{ $o.gpu.count }}
+              {{- with $res.limits }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
+            {{- with $res.requests }}
+            requests:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- else }}
+            {{- toYaml $res | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: models
+              mountPath: /root/.ollama
+      volumes:
+        - name: models
+          {{- if $o.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: ollama-models
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  labels:
+    {{- include "apo.labels" . | nindent 4 }}
+    {{- include "apo.selectorLabels" "ollama" | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "apo.selectorLabels" "ollama" | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $o.port }}
+      targetPort: http
+{{- end }}

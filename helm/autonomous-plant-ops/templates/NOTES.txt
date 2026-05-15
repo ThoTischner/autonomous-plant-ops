@@ -1,0 +1,31 @@
+Autonomous Plant Ops wurde deployt (Release: {{ .Release.Name }}).
+
+Services:
+  - sensor-simulator    :8001
+  - llm-agent           :8002
+  - dashboard-api       :8003
+  - dashboard-frontend  :80
+  - orchestrator        (Loop, kein Service)
+
+Ollama-Modus: {{ .Values.ollama.mode }}
+{{- if eq .Values.ollama.mode "in-cluster" }}
+  Ollama laeuft im Cluster. Modell muss einmalig gepullt werden:
+    kubectl exec deploy/ollama -- ollama pull {{ .Values.ollama.inCluster.model }}
+{{- else }}
+  llm-agent nutzt externen Ollama-Endpoint: {{ .Values.ollama.external.host }}
+  Sicherstellen, dass dieser aus dem Cluster erreichbar ist.
+{{- end }}
+
+{{- if .Values.ingress.enabled }}
+
+Dashboard erreichbar ueber:
+  http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}
+
+Falls {{ .Values.ingress.host }} nicht aufloest, /etc/hosts ergaenzen:
+  <INGRESS-IP>  {{ .Values.ingress.host }}
+{{- else }}
+
+Kein Ingress aktiv. Zugriff per port-forward:
+  kubectl port-forward svc/dashboard-frontend 8080:80
+  -> http://localhost:8080
+{{- end }}

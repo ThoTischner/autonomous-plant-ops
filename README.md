@@ -48,47 +48,32 @@ Der Reactor R-201 durchlaeuft ein *Thermal Runaway*-Szenario. Die Temperatur ste
 
 ## Architektur
 
-```
-                                    AUTONOMOUS PLANT OPS
-    =====================================================================================
+```mermaid
+flowchart TD
+    ORC["Orchestrator<br/>(Python)<br/>Monitoring-Loop ~12s<br/>+ Szenario-Trigger"]
+    SIM["Sensor Simulator<br/>(FastAPI :8001)<br/>Pump P-101<br/>Reactor R-201<br/>Compressor C-301"]
+    AGENT["LLM Agent<br/>(FastAPI :8002)<br/>Ollama Client<br/>Rolling Context<br/>Prompt Builder"]
+    OLLAMA["Ollama Server<br/>(Host :11434)<br/>llama3.2:3b<br/>GPU optional"]
+    API["Dashboard API<br/>(FastAPI :8003)<br/>Event Store<br/>SSE Stream"]
+    UI["Dashboard UI<br/>(React :5173)<br/>Equipment-Panels<br/>Sensor-Charts<br/>KI-Feed · Action-Log"]
 
-    +---------------------+          +-------------------+         +--------------------+
-    |                     |  HTTP    |                   |  HTTP   |                    |
-    |  Sensor Simulator   |--------->|   n8n Workflow    |-------->|    LLM Agent       |
-    |  (FastAPI :8001)    |          |   Engine (:5678)  |         |  (FastAPI :8002)   |
-    |                     |<---------|                   |<--------|                    |
-    |  - Pump P-101       |  Action  |  5-Sek.-Loop:     |  JSON   |  - Ollama Client   |
-    |  - Reactor R-201    |  Execute |  1. Sensordaten   | Analyse |  - Rolling Context |
-    |  - Compressor C-301 |          |  2. LLM-Analyse   |         |  - Prompt Builder  |
-    +---------------------+          |  3. Aktionen      |         +--------+-----------+
-                                     |  4. Dashboard     |                  |
-                                     +--------+----------+                  |
-                                              |                             |
-                                              |  Events POST               | Ollama API
-                                              v                             v
-                                     +-------------------+         +--------------------+
-                                     |                   |         |                    |
-                                     |  Dashboard API    |         |   Ollama Server    |
-                                     |  (FastAPI :8003)  |         |   (:11434)         |
-                                     |                   |         |                    |
-                                     |  - Event Store    |         |  - llama3.1:8b     |
-                                     |  - SSE Stream     |         |  - GPU optional    |
-                                     +--------+----------+         +--------------------+
-                                              |
-                                              | SSE (Server-Sent Events)
-                                              v
-                                     +-------------------+
-                                     |                   |
-                                     |  Dashboard UI     |
-                                     |  (React :5173)    |
-                                     |                   |
-                                     |  - Equipment-     |
-                                     |    Panels         |
-                                     |  - Sensor-Charts  |
-                                     |  - KI-Feed        |
-                                     |  - Action-Log     |
-                                     +-------------------+
+    ORC -->|"GET /sensors/latest"| SIM
+    ORC -->|"POST /agent/analyze"| AGENT
+    AGENT -->|"Ollama API"| OLLAMA
+    ORC -->|"POST /actions/execute"| SIM
+    ORC -->|"POST /events"| API
+    API -->|"SSE (Server-Sent Events)"| UI
 ```
+
+**Datenfluss — alles läuft über den Orchestrator:** Der LLM Agent spricht nie direkt mit dem Frontend oder der Dashboard API. Er kennt das Dashboard gar nicht und führt selbst keine Aktionen aus — er liefert auf `POST /agent/analyze` lediglich ein JSON-Objekt mit `anomalies`, `reasoning` und `actions` zurück. Der Orchestrator ist die einzige Komponente, die mit allen anderen Services redet; Agent, Sensor Simulator und Dashboard API kennen sich gegenseitig nicht. Pro Zyklus:
+
+1. **Analyse** — Orchestrator ruft `POST /agent/analyze` auf, der Agent antwortet mit JSON.
+2. **Analyse ans Dashboard** — Orchestrator pusht die Agent-Antwort als `agent_analysis`-Event via `POST /events` an die Dashboard API.
+3. **Aktionen ausführen** — Für jede Aktion ruft der Orchestrator `POST /actions/execute` am **Sensor Simulator** auf (nicht der Agent).
+4. **Aktionsergebnis ans Dashboard** — Das Ergebnis wird als separates `action_executed`-Event an die Dashboard API gepusht.
+5. **Frontend** — Die Dashboard API streamt alle Events per **SSE** ans React-Frontend.
+
+Kurz: **LLM Agent → (JSON) → Orchestrator → POST /events → Dashboard API → SSE → Frontend**.
 
 ### Der 5-Sekunden-Monitoring-Loop
 
@@ -242,11 +227,69 @@ Nach ~15 Sekunden erscheinen die ersten Sensordaten und KI-Analysen im Dashboard
 | Service | URL |
 |---------|-----|
 | Dashboard UI | [http://localhost:5173](http://localhost:5173) |
-| n8n Orchestrator | [http://localhost:5678](http://localhost:5678) |
+| Orchestrator | kein HTTP-Endpoint (Loop-Container, Logs via `docker compose logs -f orchestrator`) |
 | Sensor Simulator API | [http://localhost:8001](http://localhost:8001) |
 | LLM Agent API | [http://localhost:8002](http://localhost:8002) |
 | Dashboard API | [http://localhost:8003](http://localhost:8003) |
 | Ollama (intern) | [http://localhost:11434](http://localhost:11434) |
+
+---
+
+## Kubernetes / Helm
+
+Für ein Cluster-Deployment liegt ein Helm Chart unter `helm/autonomous-plant-ops/`. Es deployt die fünf Anwendungs-Services (sensor-simulator, llm-agent, orchestrator, dashboard-api, dashboard-frontend) und optional Ollama.
+
+```bash
+# Externer Ollama-Endpoint (Standard)
+helm install plant-ops helm/autonomous-plant-ops \
+  --set ollama.external.host=http://my-ollama-host:11434
+
+# Ollama im Cluster (inkl. PVC für Modelle)
+helm install plant-ops helm/autonomous-plant-ops \
+  --set ollama.mode=in-cluster
+
+# Ollama im Cluster mit GPU
+helm install plant-ops helm/autonomous-plant-ops \
+  --set ollama.mode=in-cluster \
+  --set ollama.inCluster.gpu.enabled=true
+```
+
+**Designentscheidungen:**
+
+- **Feste Service-Namen** — Die K8s-Service-Namen entsprechen 1:1 den Compose-Namen (`sensor-simulator`, `llm-agent`, `dashboard-api`), damit die im Code und in `nginx.conf` hartkodierten URLs unverändert funktionieren.
+- **Ollama per Toggle** — `ollama.mode` schaltet zwischen externem Endpoint und In-Cluster-Deployment um; `OLLAMA_HOST` für den llm-agent wird automatisch aufgelöst.
+- **Orchestrator** — Deployment ohne Service, fest auf 1 Replica (mehrere würden Szenarien doppelt triggern).
+- **Ingress (nginx)** — Route auf das Frontend, mit `proxy-buffering: off` und langen Timeouts, damit der SSE-Stream (`/events/stream`) offen bleibt.
+
+Konfiguration siehe `helm/autonomous-plant-ops/values.yaml` (validiert über `values.schema.json`). Bei In-Cluster-Ollama muss das Modell einmalig gepullt werden (Hinweis erscheint nach `helm install`):
+
+```bash
+kubectl exec deploy/ollama -- ollama pull llama3.2:3b
+```
+
+### Installation aus dem Chart-Repo
+
+Nach dem ersten Release (siehe CI unten) ist das Chart als Helm-Repo verfügbar:
+
+```bash
+helm repo add autonomous-plant-ops https://thotischner.github.io/autonomous-plant-ops
+helm repo update
+helm install plant-ops autonomous-plant-ops/autonomous-plant-ops
+```
+
+### CI / Release / ArtifactHub
+
+| Workflow | Trigger | Aufgabe |
+|---|---|---|
+| `images.yml` | Push/PR | Pro Service: Lint + Tests (Dockerfile.test), dann Image-Build & Push nach `ghcr.io/thotischner/autonomous-plant-ops/<svc>` |
+| `helm-ci.yml` | Chart-Änderungen | `chart-testing` lint, kind-Cluster, `helm install`, Smoke-Test (`scripts/k8s-smoke-test.sh`) gegen alle `/health`-Endpoints + Ingress-Check |
+| `chart-release.yml` | Push auf `main` (helm/**) | `chart-releaser` paketiert & veröffentlicht das Chart auf `gh-pages`, publiziert `artifacthub-repo.yml` |
+
+**Einmalige manuelle Schritte für ArtifactHub:**
+
+1. In den Repo-Settings **GitHub Pages** auf Branch `gh-pages` aktivieren (passiert nach dem ersten `chart-release`-Lauf).
+2. Auf [artifacthub.io](https://artifacthub.io) ein Helm-Repo mit URL `https://thotischner.github.io/autonomous-plant-ops` anlegen.
+3. Die dort angezeigte **Repository ID** in `helm/artifacthub-repo.yml` (`repositoryID`) eintragen und committen — der nächste `chart-release`-Lauf publiziert sie und ArtifactHub verifiziert die Ownership.
 
 ---
 

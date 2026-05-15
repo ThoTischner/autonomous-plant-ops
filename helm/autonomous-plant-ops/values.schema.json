@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "autonomous-plant-ops values",
+  "type": "object",
+  "properties": {
+    "image": {
+      "type": "object",
+      "properties": {
+        "registry": { "type": "string" },
+        "tag": { "type": "string" },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      },
+      "required": ["tag", "pullPolicy"]
+    },
+    "imagePullSecrets": { "type": "array" },
+    "services": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "image": { "type": "string" },
+          "replicas": { "type": "integer", "minimum": 0 },
+          "port": { "type": "integer" },
+          "service": { "type": "boolean" },
+          "healthPath": { "type": "string" },
+          "env": { "type": "object" },
+          "resources": { "type": "object" }
+        },
+        "required": ["image"]
+      }
+    },
+    "ollama": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["external", "in-cluster"] },
+        "external": {
+          "type": "object",
+          "properties": { "host": { "type": "string" } },
+          "required": ["host"]
+        },
+        "inCluster": {
+          "type": "object",
+          "properties": {
+            "image": { "type": "string" },
+            "port": { "type": "integer" },
+            "persistence": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "size": { "type": "string" },
+                "storageClass": { "type": "string" }
+              }
+            },
+            "gpu": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "resourceName": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "required": ["mode"]
+    },
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string" },
+        "host": { "type": "string" },
+        "annotations": { "type": "object" },
+        "tls": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "secretName": { "type": "string" }
+          }
+        }
+      },
+      "required": ["enabled", "className", "host"]
+    }
+  },
+  "required": ["image", "services", "ollama", "ingress"]
+}
