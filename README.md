@@ -129,6 +129,18 @@ Bei In-Cluster-Ollama das Modell einmalig pullen (Hinweis erscheint nach `helm i
 kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 ```
 
+**Demo-Szenarien triggern** — der `sensor-simulator`-Pod bedient `:8001` Pod-intern:
+
+```bash
+# Szenario auslösen (Liste: GET /scenarios/list)
+kubectl exec deploy/sensor-simulator -- python -c "import urllib.request,json,sys; \
+  urllib.request.urlopen(urllib.request.Request('http://localhost:8001/scenarios/trigger', \
+  data=json.dumps({'scenario':'thermal_runaway'}).encode(), \
+  headers={'Content-Type':'application/json'}))"
+```
+
+Verfügbar: `thermal_runaway`, `bearing_degradation`, `compressor_surge`, `pressure_spike`. Der Orchestrator triggert zusätzlich automatisch zufällige Szenarien.
+
 Alternativ direkt aus dem Repo-Checkout: `helm install plant-ops helm/autonomous-plant-ops`. Konfiguration in `helm/autonomous-plant-ops/values.yaml` (validiert über `values.schema.json`). Images sind auf `Chart.AppVersion` gepinnt und Multi-Arch (linux/amd64 + linux/arm64) — kein `:latest`.
 
 **Betrieb:** Vollständige Werte-Referenz (aus dem Chart-Schema generiert): [Chart-README](helm/autonomous-plant-ops/README.md) · [ArtifactHub](https://artifacthub.io/packages/helm/autonomous-plant-ops/autonomous-plant-ops). Wesentliche Constraints:
