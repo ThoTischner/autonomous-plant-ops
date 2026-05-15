@@ -1,0 +1,43 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.badgesSection" . }}
+
+## Installation
+
+```bash
+helm repo add autonomous-plant-ops https://thotischner.github.io/autonomous-plant-ops
+helm repo update
+helm install plant-ops autonomous-plant-ops/autonomous-plant-ops
+```
+
+Ollama-Modus wählen (Standard: externer Endpoint):
+
+```bash
+# Ollama im Cluster (optional mit GPU)
+helm install plant-ops autonomous-plant-ops/autonomous-plant-ops \
+  --set ollama.mode=in-cluster \
+  --set ollama.inCluster.gpu.enabled=true
+```
+
+Bei `ollama.mode=in-cluster` das Modell einmalig pullen:
+
+```bash
+kubectl exec deploy/ollama -- ollama pull llama3.2:3b
+```
+
+## Betriebshinweise
+
+- Service-Namen sind fix (Inter-Service-URLs hängen daran) — nicht umbenennen.
+- `services.orchestrator.replicas` muss `1` bleiben.
+- Ingress hält den SSE-Stream `/events/stream` offen (Annotations in `values`).
+- Images sind auf `Chart.AppVersion` gepinnt und Multi-Arch (amd64/arm64).
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+----
+
+_Diese Datei wird von [helm-docs](https://github.com/norwoodj/helm-docs) generiert. Quelle: `values.yaml` + `README.md.gotmpl` — nicht manuell editieren._
