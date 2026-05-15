@@ -92,6 +92,112 @@ Zusaetzlich triggert der Orchestrator zufaellig Fehlszenarien (~8% pro Zyklus), 
 
 ---
 
+## Schnellstart
+
+> **Cluster/Produktiv → Kubernetes (Helm). Lokal/Demo → Docker Compose.**
+
+### Kubernetes (empfohlen)
+
+Das Chart ist als Helm-Repo veröffentlicht — Installation in drei Zeilen:
+
+```bash
+helm repo add autonomous-plant-ops https://thotischner.github.io/autonomous-plant-ops
+helm repo update
+helm install plant-ops autonomous-plant-ops/autonomous-plant-ops
+```
+
+Standardmäßig erwartet das Chart einen **externen Ollama-Endpoint**. Der Ollama-Modus ist per Flag wählbar:
+
+```bash
+# Externer Ollama-Endpoint (Standard)
+helm install plant-ops autonomous-plant-ops/autonomous-plant-ops \
+  --set ollama.external.host=http://my-ollama-host:11434
+
+# Ollama im Cluster (inkl. PVC für Modelle)
+helm install plant-ops autonomous-plant-ops/autonomous-plant-ops \
+  --set ollama.mode=in-cluster
+
+# Ollama im Cluster mit GPU
+helm install plant-ops autonomous-plant-ops/autonomous-plant-ops \
+  --set ollama.mode=in-cluster \
+  --set ollama.inCluster.gpu.enabled=true
+```
+
+Bei In-Cluster-Ollama das Modell einmalig pullen (Hinweis erscheint nach `helm install`):
+
+```bash
+kubectl exec deploy/ollama -- ollama pull llama3.2:3b
+```
+
+Alternativ direkt aus dem Repo-Checkout: `helm install plant-ops helm/autonomous-plant-ops`. Konfiguration in `helm/autonomous-plant-ops/values.yaml` (validiert über `values.schema.json`). Images sind auf `Chart.AppVersion` gepinnt und Multi-Arch (linux/amd64 + linux/arm64) — kein `:latest`.
+
+**Designentscheidungen:**
+
+- **Feste Service-Namen** — die K8s-Service-Namen entsprechen 1:1 den Compose-Namen, damit hartkodierte URLs / `nginx.conf` unverändert funktionieren.
+- **Ollama per Toggle** — `ollama.mode` schaltet extern ⇄ in-cluster; `OLLAMA_HOST` wird automatisch aufgelöst.
+- **Orchestrator** — Deployment ohne Service, fix 1 Replica (mehrere würden Szenarien doppelt triggern).
+- **Ingress (nginx)** — Route aufs Frontend, `proxy-buffering: off` + lange Timeouts, damit der SSE-Stream offen bleibt.
+
+<details>
+<summary>CI / Release / ArtifactHub</summary>
+
+| Workflow | Trigger | Aufgabe |
+|---|---|---|
+| `images.yml` | Push/PR + Tag `v*` | Pro Service Lint+Tests, dann Multi-Arch-Image (amd64/arm64) nach GHCR; bei Tag `vX.Y.Z` → `:X.Y.Z` |
+| `helm-ci.yml` | Chart-Änderungen | `chart-testing` lint, kind-Cluster, `helm install`, Smoke-Test gegen alle `/health` + Ingress |
+| `chart-release.yml` | Push auf `main` (`helm/**`) | `chart-releaser` paketiert & veröffentlicht das Chart auf `gh-pages` + `artifacthub-repo.yml` |
+
+**Release-Flow:** `appVersion`/`version` in `Chart.yaml` bumpen → Git-Tag `vX.Y.Z` pushen (baut `:X.Y.Z`-Images) → Chart-PR mergen (publiziert Chart) → GitHub Release anlegen.
+</details>
+
+### Docker Compose (lokal / Demo)
+
+| Anforderung | Details |
+|-------------|---------|
+| **Docker & Docker Compose** | Version 2.x empfohlen |
+| **RAM** | Mindestens 8 GB (fuer Ollama LLM) |
+| **GPU** | Optional -- Ollama laeuft auch auf CPU |
+| **Ports** | 5173, 8001, 8002, 8003, 11434 muessen frei sein |
+
+```bash
+git clone https://github.com/ThoTischner/autonomous-plant-ops.git
+cd autonomous-plant-ops
+```
+
+Ollama muss auf dem **Host** laufen (nicht im Container) für GPU-Zugriff:
+
+```bash
+# Windows PowerShell:
+$env:OLLAMA_HOST="0.0.0.0"; ollama serve
+# Zweites Terminal:
+ollama pull llama3.2:3b
+```
+
+Dann alle Services bauen und starten:
+
+```bash
+docker compose up --build -d
+```
+
+Das war's — der **Orchestrator** startet den Monitoring-Loop und triggert automatisch Fehlszenarien. Dashboard öffnen:
+
+```
+http://localhost:5173
+```
+
+Nach ~15 Sekunden erscheinen die ersten Sensordaten und KI-Analysen.
+
+| Service | URL |
+|---------|-----|
+| Dashboard UI | http://localhost:5173 |
+| Orchestrator | kein HTTP-Endpoint (`docker compose logs -f orchestrator`) |
+| Sensor Simulator API | http://localhost:8001 |
+| LLM Agent API | http://localhost:8002 |
+| Dashboard API | http://localhost:8003 |
+| Ollama (Host) | http://localhost:11434 |
+
+---
+
 ## Tech Stack
 
 | Technologie | Rolle | Port |
@@ -102,8 +208,7 @@ Zusaetzlich triggert der Orchestrator zufaellig Fehlszenarien (~8% pro Zyklus), 
 | **React + TypeScript** | Echtzeit-Dashboard mit Tailwind CSS | `5173` |
 | **Recharts + Framer Motion** | Gradient-Charts und animierte Equipment-Icons | -- |
 | **SSE (Server-Sent Events)** | Echtzeit-Streaming zum Dashboard | -- |
-| **Docker Compose** | Container-Orchestrierung aller Services | -- |
-| **n8n** (optional) | Visuelle Workflow-Orchestrierung | `5678` |
+| **Docker Compose / Helm** | Container-Orchestrierung (lokal / Kubernetes) | -- |
 | **Nginx** | Reverse Proxy + SSE Proxy fuer das Frontend | -- |
 
 ---
@@ -176,120 +281,6 @@ Das LLM erhaelt die aktuellen Sensordaten, historische Messwerte und kuerzlich a
 - **KI-Reasoning-Feed** -- die Begruendungen des LLM in Echtzeit
 - **Action-Log** -- alle ausgefuehrten Gegenmassnahmen chronologisch
 
----
-
-## Schnellstart
-
-### Voraussetzungen
-
-| Anforderung | Details |
-|-------------|---------|
-| **Docker & Docker Compose** | Version 2.x empfohlen |
-| **RAM** | Mindestens 8 GB (fuer Ollama LLM) |
-| **GPU** | Optional -- Ollama laeuft auch auf CPU |
-| **Ports** | 5173, 5678, 8001, 8002, 8003, 11434 muessen frei sein |
-
-### Installation
-
-```bash
-git clone https://github.com/your-org/autonomous-plant-ops.git
-cd autonomous-plant-ops
-./scripts/setup.sh
-```
-
-**Voraussetzung:** Ollama muss auf dem Host laufen (nicht im Container) fuer GPU-Zugriff:
-```bash
-# Windows PowerShell:
-$env:OLLAMA_HOST="0.0.0.0"; ollama serve
-# Dann in einem zweiten Terminal:
-ollama pull llama3.2:3b
-```
-
-### Services starten
-
-```bash
-# Alle Services bauen und starten
-docker compose up --build -d
-```
-
-Das war's! Der **Orchestrator** startet automatisch den Monitoring-Loop und triggert zufaellig Fehlszenarien. Kein manuelles Setup noetig.
-
-### Dashboard oeffnen
-
-```
-http://localhost:5173
-```
-
-Nach ~15 Sekunden erscheinen die ersten Sensordaten und KI-Analysen im Dashboard.
-
-### Alle Service-URLs
-
-| Service | URL |
-|---------|-----|
-| Dashboard UI | [http://localhost:5173](http://localhost:5173) |
-| Orchestrator | kein HTTP-Endpoint (Loop-Container, Logs via `docker compose logs -f orchestrator`) |
-| Sensor Simulator API | [http://localhost:8001](http://localhost:8001) |
-| LLM Agent API | [http://localhost:8002](http://localhost:8002) |
-| Dashboard API | [http://localhost:8003](http://localhost:8003) |
-| Ollama (intern) | [http://localhost:11434](http://localhost:11434) |
-
----
-
-## Kubernetes / Helm
-
-Für ein Cluster-Deployment liegt ein Helm Chart unter `helm/autonomous-plant-ops/`. Es deployt die fünf Anwendungs-Services (sensor-simulator, llm-agent, orchestrator, dashboard-api, dashboard-frontend) und optional Ollama.
-
-```bash
-# Externer Ollama-Endpoint (Standard)
-helm install plant-ops helm/autonomous-plant-ops \
-  --set ollama.external.host=http://my-ollama-host:11434
-
-# Ollama im Cluster (inkl. PVC für Modelle)
-helm install plant-ops helm/autonomous-plant-ops \
-  --set ollama.mode=in-cluster
-
-# Ollama im Cluster mit GPU
-helm install plant-ops helm/autonomous-plant-ops \
-  --set ollama.mode=in-cluster \
-  --set ollama.inCluster.gpu.enabled=true
-```
-
-**Designentscheidungen:**
-
-- **Feste Service-Namen** — Die K8s-Service-Namen entsprechen 1:1 den Compose-Namen (`sensor-simulator`, `llm-agent`, `dashboard-api`), damit die im Code und in `nginx.conf` hartkodierten URLs unverändert funktionieren.
-- **Ollama per Toggle** — `ollama.mode` schaltet zwischen externem Endpoint und In-Cluster-Deployment um; `OLLAMA_HOST` für den llm-agent wird automatisch aufgelöst.
-- **Orchestrator** — Deployment ohne Service, fest auf 1 Replica (mehrere würden Szenarien doppelt triggern).
-- **Ingress (nginx)** — Route auf das Frontend, mit `proxy-buffering: off` und langen Timeouts, damit der SSE-Stream (`/events/stream`) offen bleibt.
-
-Konfiguration siehe `helm/autonomous-plant-ops/values.yaml` (validiert über `values.schema.json`). Bei In-Cluster-Ollama muss das Modell einmalig gepullt werden (Hinweis erscheint nach `helm install`):
-
-```bash
-kubectl exec deploy/ollama -- ollama pull llama3.2:3b
-```
-
-### Installation aus dem Chart-Repo
-
-Nach dem ersten Release (siehe CI unten) ist das Chart als Helm-Repo verfügbar:
-
-```bash
-helm repo add autonomous-plant-ops https://thotischner.github.io/autonomous-plant-ops
-helm repo update
-helm install plant-ops autonomous-plant-ops/autonomous-plant-ops
-```
-
-### CI / Release / ArtifactHub
-
-| Workflow | Trigger | Aufgabe |
-|---|---|---|
-| `images.yml` | Push/PR | Pro Service: Lint + Tests (Dockerfile.test), dann Image-Build & Push nach `ghcr.io/thotischner/autonomous-plant-ops/<svc>` |
-| `helm-ci.yml` | Chart-Änderungen | `chart-testing` lint, kind-Cluster, `helm install`, Smoke-Test (`scripts/k8s-smoke-test.sh`) gegen alle `/health`-Endpoints + Ingress-Check |
-| `chart-release.yml` | Push auf `main` (helm/**) | `chart-releaser` paketiert & veröffentlicht das Chart auf `gh-pages`, publiziert `artifacthub-repo.yml` |
-
-**Einmalige manuelle Schritte für ArtifactHub:**
-
-1. In den Repo-Settings **GitHub Pages** auf Branch `gh-pages` aktivieren (passiert nach dem ersten `chart-release`-Lauf).
-2. Auf [artifacthub.io](https://artifacthub.io) ein Helm-Repo mit URL `https://thotischner.github.io/autonomous-plant-ops` anlegen.
-3. Die dort angezeigte **Repository ID** in `helm/artifacthub-repo.yml` (`repositoryID`) eintragen und committen — der nächste `chart-release`-Lauf publiziert sie und ArtifactHub verifiziert die Ownership.
 
 ---
 
