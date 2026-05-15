@@ -82,12 +82,25 @@ export default function SensorChart({ title, dataKey, data, unit, normalRange }:
   }
 
   return (
-    <div className="bg-plant-card border border-plant-border rounded-lg p-4 h-full">
+    <div className="bg-plant-card border border-plant-border rounded-lg p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-gray-300">{title}</h3>
         <span className="text-[10px] text-gray-600 font-mono">{unit}</span>
       </div>
-      <div ref={boxRef} className="h-[calc(100%-28px)]">
+      {equipmentIds.length > 0 && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2">
+          {equipmentIds.map((eqId, idx) => (
+            <span key={eqId} className="flex items-center gap-1.5 text-[10px] text-gray-400">
+              <span
+                className="inline-block w-3 h-[3px] rounded-full"
+                style={{ backgroundColor: EQUIPMENT_COLORS[idx % EQUIPMENT_COLORS.length].stroke }}
+              />
+              {eqId}
+            </span>
+          ))}
+        </div>
+      )}
+      <div ref={boxRef} className="flex-1 min-h-0">
         {chartData.length === 0 || size.w === 0 || size.h === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-gray-600">
             Waiting for data...
