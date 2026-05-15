@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .routes.control import router as control_router
 from .routes.events import router as events_router
 
 app = FastAPI(title="Autonomous Plant Ops - Dashboard API")
@@ -14,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(events_router)
+app.include_router(control_router)
 
 
 @app.get("/health")

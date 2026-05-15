@@ -13,6 +13,7 @@ class SensorData(BaseModel):
     vibration: float
     flow_rate: Optional[float] = None
     status: str
+    shutdown_seconds: Optional[float] = None
 
 
 class AnalysisRequest(BaseModel):
@@ -33,6 +34,7 @@ class ActionType(str, Enum):
     reduce_speed = "reduce_speed"
     increase_cooling = "increase_cooling"
     shutdown_equipment = "shutdown_equipment"
+    restart_equipment = "restart_equipment"
     alert_operator = "alert_operator"
     no_action = "no_action"
 

@@ -42,6 +42,8 @@ Der Reactor R-201 durchlaeuft ein *Thermal Runaway*-Szenario. Die Temperatur ste
 - **Realistische Sensorsimulation** — 3 Equipment-Typen mit physikbasiertem Rauschen und 4 Fehlszenarien
 - **Echtzeit-Dashboard** — React + Tailwind mit SSE-Streaming, animierten Equipment-Icons und Gradient-Charts
 - **Vollautomatische Demo** — Orchestrator triggert zufaellige Szenarien, der KI-Agent reagiert live
+- **Autonome Recovery** — der Agent schaltet bei Gefahr ab und fährt nach Cooldown selbstständig wieder hoch (`restart_equipment`)
+- **Dashboard-Steuerung** — Szenario-Buttons, Reset auf Normalbetrieb und ein live editierbarer System-Prompt direkt im UI
 - **Vollstaendig containerisiert** — Ein `docker compose up --build` und alles laeuft
 
 ---
@@ -371,6 +373,10 @@ curl -X POST http://localhost:8001/scenarios/trigger \
 **Erwartete KI-Reaktion:** Erkennt kritischen Druckanstieg, empfiehlt sofortige Druckentlastung oder Abschaltung.
 
 ---
+
+### Über das Dashboard
+
+Im linken Panel der UI: Szenario-Buttons, **↺ Normalzustand wiederherstellen** (stoppt laufende Szenarien + setzt alle Anlagen zurück) sowie ein editierbarer **System-Prompt** (Speichern / Default). Diese Steuerung läuft über `dashboard-api` (`/api/control/*`), das an Sensor-Simulator und LLM-Agent weiterreicht.
 
 ### Szenario via Skript ausloesen
 

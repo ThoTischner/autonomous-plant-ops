@@ -23,6 +23,9 @@ class SensorReading(BaseModel):
     vibration: float
     flow_rate: Optional[float] = None
     status: EquipmentStatus = EquipmentStatus.NORMAL
+    # Seconds since the equipment was shut down (None if running). Lets the
+    # agent decide when a safe restart is appropriate.
+    shutdown_seconds: Optional[float] = None
 
 
 class ActionType(str, Enum):
@@ -30,6 +33,7 @@ class ActionType(str, Enum):
     REDUCE_SPEED = "reduce_speed"
     INCREASE_COOLING = "increase_cooling"
     SHUTDOWN_EQUIPMENT = "shutdown_equipment"
+    RESTART_EQUIPMENT = "restart_equipment"
     ALERT_OPERATOR = "alert_operator"
     NO_ACTION = "no_action"
 

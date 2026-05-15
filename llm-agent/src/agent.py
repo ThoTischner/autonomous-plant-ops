@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # Valid action types for normalization
 VALID_ACTIONS = {
     "adjust_setpoint", "reduce_speed", "increase_cooling",
-    "shutdown_equipment", "alert_operator", "no_action",
+    "shutdown_equipment", "restart_equipment", "alert_operator", "no_action",
 }
 VALID_SEVERITIES = {"low", "medium", "high", "critical"}
 

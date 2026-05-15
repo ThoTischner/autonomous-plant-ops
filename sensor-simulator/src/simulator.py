@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections import deque
 
 import numpy as np
@@ -69,6 +70,9 @@ class Simulator:
         cfg = EQUIPMENT[equipment_id]
 
         if cfg.is_shutdown:
+            shutdown_seconds = None
+            if cfg.shutdown_at is not None:
+                shutdown_seconds = round(time.time() - cfg.shutdown_at, 1)
             reading = SensorReading(
                 equipment_id=equipment_id,
                 equipment_name=cfg.name,
@@ -77,6 +81,7 @@ class Simulator:
                 vibration=0.0,
                 flow_rate=0.0 if cfg.flow_rate else None,
                 status=EquipmentStatus.SHUTDOWN,
+                shutdown_seconds=shutdown_seconds,
             )
             self.latest[equipment_id] = reading
             self.history[equipment_id].append(reading)
