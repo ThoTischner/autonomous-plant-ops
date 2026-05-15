@@ -41,12 +41,12 @@ def test_sensor_simulator_returns_sensor_data(sensor_client):
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
-    # Should have 3 equipment: P-101, R-201, C-301
+    # Should have the default vehicle fleet
     assert len(data) >= 3
     equipment_ids = {r["equipment_id"] for r in data}
-    assert "P-101" in equipment_ids
-    assert "R-201" in equipment_ids
-    assert "C-301" in equipment_ids
+    assert "FL-401" in equipment_ids
+    assert "TR-501" in equipment_ids
+    assert "AGV-601" in equipment_ids
 
 
 def test_sensor_simulator_reading_has_expected_fields(sensor_client):
@@ -82,18 +82,18 @@ def test_sensor_simulator_list_scenarios(sensor_client):
 
 def test_sensor_simulator_execute_action(sensor_client):
     resp = sensor_client.post("/actions/execute", json={
-        "equipment_id": "P-101",
+        "equipment_id": "FL-401",
         "action": "no_action",
         "reason": "Integration test",
     })
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
-    assert body["equipment_id"] == "P-101"
+    assert body["equipment_id"] == "FL-401"
 
 
 def test_sensor_simulator_history(sensor_client):
-    resp = sensor_client.get("/sensors/history/P-101", params={"limit": 5})
+    resp = sensor_client.get("/sensors/history/FL-401", params={"limit": 5})
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
@@ -114,8 +114,8 @@ def test_dashboard_api_post_and_get_event(dashboard_client):
     # Post an event
     post_resp = dashboard_client.post("/events", json={
         "event_type": "sensor_reading",
-        "data": {"equipment_id": "P-101", "temperature": 72.5},
-        "equipment_id": "P-101",
+        "data": {"equipment_id": "FL-401", "temperature": 72.5},
+        "equipment_id": "FL-401",
     })
     assert post_resp.status_code == 200
     assert post_resp.json()["status"] == "ok"
@@ -127,7 +127,7 @@ def test_dashboard_api_post_and_get_event(dashboard_client):
     assert len(events) >= 1
 
     # Find our posted event
-    matching = [e for e in events if e.get("equipment_id") == "P-101"]
+    matching = [e for e in events if e.get("equipment_id") == "FL-401"]
     assert len(matching) >= 1
 
 
@@ -136,13 +136,13 @@ def test_dashboard_api_event_type_filter(dashboard_client):
     dashboard_client.post("/events", json={
         "event_type": "anomaly_detected",
         "data": {"sensor": "temperature", "value": 215.0},
-        "equipment_id": "R-201",
+        "equipment_id": "AGV-601",
         "severity": "high",
     })
     dashboard_client.post("/events", json={
         "event_type": "action_executed",
         "data": {"action": "increase_cooling"},
-        "equipment_id": "R-201",
+        "equipment_id": "AGV-601",
     })
 
     # Filter by anomaly_detected
@@ -156,7 +156,7 @@ def test_dashboard_api_event_type_filter(dashboard_client):
 def test_dashboard_api_post_scenario_event(dashboard_client):
     resp = dashboard_client.post("/events", json={
         "event_type": "scenario_triggered",
-        "data": {"scenario": "compressor_surge", "equipment_id": "C-301"},
+        "data": {"scenario": "compressor_surge", "equipment_id": "AGV-601"},
     })
     assert resp.status_code == 200
     body = resp.json()
@@ -189,7 +189,7 @@ def test_control_trigger_then_reset(dashboard_client):
     assert r.status_code == 200
     body = r.json()
     assert body["success"] is True
-    assert {"P-101", "R-201", "C-301"}.issubset(set(body["equipment"]))
+    assert {"FL-401", "TR-501", "AGV-601"}.issubset(set(body["equipment"]))
 
 
 def test_control_prompt_roundtrip(dashboard_client):
@@ -217,7 +217,7 @@ def test_control_equipment_crud(dashboard_client):
     base = dashboard_client.get("/control/equipment")
     assert base.status_code == 200
     start_ids = {e["equipment_id"] for e in base.json()}
-    assert {"P-101", "R-201", "C-301"}.issubset(start_ids)
+    assert {"FL-401", "TR-501", "AGV-601"}.issubset(start_ids)
 
     new = {
         "equipment_id": "IT-1", "name": "IntegrationUnit", "etype": "pump",

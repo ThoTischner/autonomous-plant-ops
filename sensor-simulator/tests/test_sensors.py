@@ -5,7 +5,7 @@ from src.simulator import simulator
 @pytest.fixture(autouse=True)
 def _seed_simulator():
     """Ensure the simulator has at least one reading per equipment."""
-    for eid in ("P-101", "R-201", "C-301"):
+    for eid in ("FL-401", "AGV-601", "TR-501"):
         simulator.generate_reading(eid)
     yield
 
@@ -27,9 +27,9 @@ async def test_get_latest_returns_list(client):
     assert isinstance(data, list)
     assert len(data) >= 3
     equipment_ids = {r["equipment_id"] for r in data}
-    assert "P-101" in equipment_ids
-    assert "R-201" in equipment_ids
-    assert "C-301" in equipment_ids
+    assert "FL-401" in equipment_ids
+    assert "AGV-601" in equipment_ids
+    assert "TR-501" in equipment_ids
 
 
 
@@ -54,21 +54,21 @@ async def test_get_latest_reading_structure(client):
 
 
 async def test_get_latest_specific_equipment(client):
-    resp = await client.get("/sensors/latest/P-101")
+    resp = await client.get("/sensors/latest/FL-401")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["equipment_id"] == "P-101"
-    assert data["equipment_name"] == "Pump P-101"
+    assert data["equipment_id"] == "FL-401"
+    assert data["equipment_name"] == "Gabelstapler FL-401"
 
 
 
 async def test_get_history(client):
-    resp = await client.get("/sensors/history/P-101")
+    resp = await client.get("/sensors/history/FL-401")
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
     assert len(data) >= 1
-    assert data[0]["equipment_id"] == "P-101"
+    assert data[0]["equipment_id"] == "FL-401"
 
 
 
@@ -82,8 +82,8 @@ async def test_get_history_unknown_equipment(client):
 async def test_get_history_limit(client):
     # Generate multiple readings
     for _ in range(5):
-        simulator.generate_reading("R-201")
-    resp = await client.get("/sensors/history/R-201", params={"limit": 2})
+        simulator.generate_reading("AGV-601")
+    resp = await client.get("/sensors/history/AGV-601", params={"limit": 2})
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) <= 2

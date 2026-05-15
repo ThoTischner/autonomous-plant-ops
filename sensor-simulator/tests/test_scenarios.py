@@ -16,7 +16,7 @@ async def test_trigger_valid_scenario(client):
 async def test_trigger_scenario_with_equipment_id(client):
     resp = await client.post("/scenarios/trigger", json={
         "scenario": "bearing_degradation",
-        "equipment_id": "P-101",
+        "equipment_id": "FL-401",
     })
     assert resp.status_code == 200
     body = resp.json()
@@ -67,5 +67,5 @@ async def test_reset_restores_normal(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
-    assert "R-201" in body["equipment"]
+    assert "FL-401" in body["equipment"]
     assert len(body["equipment"]) >= 3

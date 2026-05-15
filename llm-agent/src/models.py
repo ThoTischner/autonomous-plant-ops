@@ -14,6 +14,8 @@ class SensorData(BaseModel):
     flow_rate: Optional[float] = None
     status: str
     shutdown_seconds: Optional[float] = None
+    latent_status: Optional[str] = None
+    safe_to_restart: Optional[bool] = None
 
 
 class AnalysisRequest(BaseModel):

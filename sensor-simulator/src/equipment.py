@@ -46,30 +46,18 @@ EQUIPMENT: dict[str, EquipmentConfig] = {}
 
 
 def _defaults() -> list[dict]:
+    # Out-of-the-box fleet: vehicles only.
     return [
         {
-            "equipment_id": "P-101", "name": "Pump P-101", "etype": "pump",
-            "temperature": {"min": 60, "max": 80, "unit": "°C"},
-            "pressure": {"min": 2, "max": 4, "unit": "bar"},
-            "vibration": {"min": 0, "max": 5, "unit": "mm/s"},
-            "flow_rate": {"min": 100, "max": 150, "unit": "L/min"},
-        },
-        {
-            "equipment_id": "R-201", "name": "Reactor R-201", "etype": "reactor",
-            "temperature": {"min": 150, "max": 200, "unit": "°C"},
-            "pressure": {"min": 5, "max": 10, "unit": "bar"},
-            "vibration": {"min": 0, "max": 3, "unit": "mm/s"},
-            "flow_rate": None,
-        },
-        {
-            "equipment_id": "C-301", "name": "Compressor C-301", "etype": "compressor",
-            "temperature": {"min": 40, "max": 70, "unit": "°C"},
-            "pressure": {"min": 6, "max": 12, "unit": "bar"},
-            "vibration": {"min": 0, "max": 8, "unit": "mm/s"},
-            "flow_rate": {"min": 200, "max": 300, "unit": "m³/h"},
-        },
-        {
             "equipment_id": "FL-401", "name": "Gabelstapler FL-401",
+            "etype": "forklift",
+            "temperature": {"min": 40, "max": 90, "unit": "°C"},
+            "pressure": {"min": 5, "max": 15, "unit": "bar"},
+            "vibration": {"min": 0, "max": 6, "unit": "mm/s"},
+            "flow_rate": {"min": 10, "max": 40, "unit": "L/min"},
+        },
+        {
+            "equipment_id": "FL-402", "name": "Gabelstapler FL-402",
             "etype": "forklift",
             "temperature": {"min": 40, "max": 90, "unit": "°C"},
             "pressure": {"min": 5, "max": 15, "unit": "bar"},

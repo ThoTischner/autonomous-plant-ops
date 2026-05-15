@@ -50,7 +50,7 @@ async def test_get_ranges_text_fallback(monkeypatch):
 
     monkeypatch.setattr(httpx, "AsyncClient", _Boom)
     txt = await ranges.get_ranges_text()
-    assert "P-101" in txt and "R-201" in txt  # static fallback
+    assert "FL-401" in txt and "AGV-601" in txt  # static fallback
 
 
 @pytest.mark.parametrize("flow", [None, {"min": 1, "max": 2, "unit": "x"}])

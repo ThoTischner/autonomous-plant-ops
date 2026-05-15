@@ -42,6 +42,10 @@ class SensorReading(BaseModel):
     # Seconds since the equipment was shut down (None if running). Lets the
     # agent decide when a safe restart is appropriate.
     shutdown_seconds: Optional[float] = None
+    # While shut down: what the status WOULD be on restart (latent), and
+    # whether it is safe to restart now (latent values all uncritical).
+    latent_status: Optional[EquipmentStatus] = None
+    safe_to_restart: Optional[bool] = None
 
 
 class ActionType(str, Enum):
