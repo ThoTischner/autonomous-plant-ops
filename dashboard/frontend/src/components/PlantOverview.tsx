@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
 import type { EquipmentStatus } from '../types'
 
-const STATUS_DE: Record<EquipmentStatus, string> = {
-  normal: 'Normal',
+// The plant-wide rollup has its own states: a shut-down (but otherwise
+// healthy) fleet is "degraded", NOT critical. Warning/critical only when
+// equipment is actually in warning/critical.
+type OverallStatus = 'normal' | 'degraded' | 'warning' | 'critical'
+
+const OVERALL_DE: Record<OverallStatus, string> = {
+  normal: 'Alles normal',
+  degraded: 'Eingeschränkt',
   warning: 'Warnung',
   critical: 'Kritisch',
-  shutdown: 'Abgeschaltet',
 }
 
 interface Props {
@@ -13,30 +18,34 @@ interface Props {
   connected: boolean
 }
 
-function getOverallStatus(equipmentStatus: Map<string, EquipmentStatus>): EquipmentStatus {
-  let worst: EquipmentStatus = 'normal'
+function getOverallStatus(equipmentStatus: Map<string, EquipmentStatus>): OverallStatus {
+  let hasWarning = false
+  let hasShutdown = false
   for (const status of equipmentStatus.values()) {
-    if (status === 'critical' || status === 'shutdown') return 'critical'
-    if (status === 'warning') worst = 'warning'
+    if (status === 'critical') return 'critical'
+    if (status === 'warning') hasWarning = true
+    if (status === 'shutdown') hasShutdown = true
   }
-  return worst
+  if (hasWarning) return 'warning'
+  if (hasShutdown) return 'degraded'
+  return 'normal'
 }
 
-function statusColor(status: EquipmentStatus): string {
+function statusColor(status: OverallStatus): string {
   switch (status) {
     case 'normal': return 'bg-plant-success'
+    case 'degraded': return 'bg-orange-500'
     case 'warning': return 'bg-plant-warning'
     case 'critical': return 'bg-plant-danger'
-    case 'shutdown': return 'bg-gray-500'
   }
 }
 
-function statusPulse(status: EquipmentStatus): string {
+function statusPulse(status: OverallStatus): string {
   switch (status) {
     case 'normal': return 'pulse-normal'
+    case 'degraded': return ''
     case 'warning': return 'pulse-warning'
     case 'critical': return 'pulse-critical'
-    case 'shutdown': return ''
   }
 }
 
@@ -72,7 +81,7 @@ export default function PlantOverview({ equipmentStatus, connected }: Props) {
           <div
             className={`w-3 h-3 rounded-full ${statusColor(overall)} ${statusPulse(overall)}`}
           />
-          <span className="text-sm text-gray-300">{STATUS_DE[overall]}</span>
+          <span className="text-sm text-gray-300">{OVERALL_DE[overall]}</span>
           {equipmentCount > 0 && (
             <span className="text-xs text-gray-500">
               ({equipmentCount} Anlagen)
