@@ -86,6 +86,8 @@ services:
     replicas: 1
     # -- Container-/Service-Port (nonroot-nginx -> unprivilegierter Port 8080).
     port: 8080
+    # -- nginx braucht beschreibbare Laufzeit-Pfade -> kein read-only Root.
+    readOnlyRootFilesystem: false
     # -- Ressourcen-Requests/Limits.
     resources: {}
 
@@ -177,3 +179,19 @@ nodeSelector: {}
 tolerations: []
 # -- Affinity (alle Deployments).
 affinity: {}
+
+# -- Gehärteter SecurityContext für alle Deployments (passt zu den nonroot
+# Wolfi/Chainguard-Images: runAsNonRoot, Caps drop ALL, no privilege
+# escalation, seccomp RuntimeDefault). Schreibzugriff nur über ein
+# /tmp-emptyDir und persistente Volumes.
+securityContext:
+  # -- SecurityContext aktivieren.
+  enabled: true
+  # -- UID (nonroot, entspricht den Images).
+  runAsUser: 65532
+  # -- GID.
+  runAsGroup: 65532
+  # -- fsGroup für gemountete Volumes.
+  fsGroup: 65532
+  # -- Root-Dateisystem read-only (global). Pro Service via `services.<name>.readOnlyRootFilesystem` überschreibbar.
+  readOnlyRootFilesystem: true

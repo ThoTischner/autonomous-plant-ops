@@ -42,10 +42,29 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if $.Values.securityContext.enabled }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{ $.Values.securityContext.runAsUser }}
+        runAsGroup: {{ $.Values.securityContext.runAsGroup }}
+        fsGroup: {{ $.Values.securityContext.fsGroup }}
+        seccompProfile:
+          type: RuntimeDefault
+      {{- end }}
       containers:
         - name: {{ $name }}
           image: {{ include "apo.image" (dict "root" $ "svc" $svc) }}
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- if $.Values.securityContext.enabled }}
+          {{- $ro := $.Values.securityContext.readOnlyRootFilesystem }}
+          {{- if hasKey $svc "readOnlyRootFilesystem" }}{{ $ro = $svc.readOnlyRootFilesystem }}{{ end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ $ro }}
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          {{- end }}
           {{- if ne $svc.service false }}
           ports:
             - name: http
@@ -59,6 +78,10 @@ spec:
             {{- if eq $name "llm-agent" }}
             - name: OLLAMA_HOST
               value: {{ include "apo.ollamaHost" $ | quote }}
+            {{- end }}
+            {{- if $.Values.securityContext.enabled }}
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
             {{- end }}
           {{- if and (ne $svc.service false) $svc.healthPath }}
           readinessProbe:
@@ -78,16 +101,30 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if and $svc.persistence $svc.persistence.enabled }}
+          {{- $persist := and $svc.persistence $svc.persistence.enabled }}
+          {{- $tmp := $.Values.securityContext.enabled }}
+          {{- if or $persist $tmp }}
           volumeMounts:
+            {{- if $tmp }}
+            - name: tmp
+              mountPath: /tmp
+            {{- end }}
+            {{- if $persist }}
             - name: data
               mountPath: {{ $svc.persistence.mountPath | default "/data" }}
+            {{- end }}
           {{- end }}
-      {{- if and $svc.persistence $svc.persistence.enabled }}
+      {{- if or $persist $tmp }}
       volumes:
+        {{- if $tmp }}
+        - name: tmp
+          emptyDir: {}
+        {{- end }}
+        {{- if $persist }}
         - name: data
           persistentVolumeClaim:
             claimName: {{ $name }}-data
+        {{- end }}
       {{- end }}
 {{- if and $svc.persistence $svc.persistence.enabled }}
 ---

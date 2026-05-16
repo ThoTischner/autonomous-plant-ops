@@ -71,14 +71,16 @@ async def test_delete_and_guard_last(client):
     # Delete down to one, last delete must be blocked.
     ids = [e["equipment_id"] for e in (await client.get("/equipment")).json()]
     for eid in ids[:-1]:
-        assert (await client.delete(f"/equipment/{eid}")).status_code == 200
+        resp = await client.delete(f"/equipment/{eid}")
+        assert resp.status_code == 200
     last = await client.delete(f"/equipment/{ids[-1]}")
     assert last.status_code == 400
 
 
 async def test_persistence_roundtrip(client):
     await client.post("/equipment", json=NEW)
-    data = json.loads(open(eq.EQUIPMENT_FILE, encoding="utf-8").read())
+    with open(eq.EQUIPMENT_FILE, encoding="utf-8") as fh:
+        data = json.load(fh)
     assert any(e["equipment_id"] == "T-900" for e in data)
     eq.EQUIPMENT.clear()
     eq.load()  # reload from file

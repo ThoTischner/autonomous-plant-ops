@@ -2,7 +2,7 @@
 
 KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 
-![Version: 0.2.4](https://img.shields.io/badge/Version-0.2.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.4](https://img.shields.io/badge/AppVersion-1.0.4-informational?style=flat-square)
+![Version: 0.2.5](https://img.shields.io/badge/Version-0.2.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5](https://img.shields.io/badge/AppVersion-1.0.5-informational?style=flat-square)
 
 ## Installation
 
@@ -69,6 +69,7 @@ kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 | services.dashboard-frontend.image | string | `"autonomous-plant-ops/dashboard-frontend"` | Image-Repository (Chainguard/Wolfi-nginx, nonroot; proxyt `/api/` zur dashboard-api). |
 | services.dashboard-frontend.replicas | int | `1` | Replica-Anzahl. |
 | services.dashboard-frontend.port | int | `8080` | Container-/Service-Port (nonroot-nginx -> unprivilegierter Port 8080). |
+| services.dashboard-frontend.readOnlyRootFilesystem | bool | `false` | nginx braucht beschreibbare Laufzeit-Pfade -> kein read-only Root. |
 | services.dashboard-frontend.resources | object | `{}` | Ressourcen-Requests/Limits. |
 | ollama.mode | string | `"external"` | Betriebsmodus: `external` (externer Endpoint) oder `in-cluster` (Ollama im Cluster). |
 | ollama.external.host | string | `"http://host.docker.internal:11434"` | Voll qualifizierte URL des externen Ollama-Servers (nur bei `mode: external`). |
@@ -107,6 +108,12 @@ kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 | nodeSelector | object | `{}` | NodeSelector (alle Deployments). |
 | tolerations | list | `[]` | Tolerations (alle Deployments). |
 | affinity | object | `{}` | Affinity (alle Deployments). |
+| securityContext | object | `{"enabled":true,"fsGroup":65532,"readOnlyRootFilesystem":true,"runAsGroup":65532,"runAsUser":65532}` | Gehärteter SecurityContext für alle Deployments (passt zu den nonroot Wolfi/Chainguard-Images: runAsNonRoot, Caps drop ALL, no privilege escalation, seccomp RuntimeDefault). Schreibzugriff nur über ein /tmp-emptyDir und persistente Volumes. |
+| securityContext.enabled | bool | `true` | SecurityContext aktivieren. |
+| securityContext.runAsUser | int | `65532` | UID (nonroot, entspricht den Images). |
+| securityContext.runAsGroup | int | `65532` | GID. |
+| securityContext.fsGroup | int | `65532` | fsGroup für gemountete Volumes. |
+| securityContext.readOnlyRootFilesystem | bool | `true` | Root-Dateisystem read-only (global). Pro Service via `services.<name>.readOnlyRootFilesystem` überschreibbar. |
 
 ----
 

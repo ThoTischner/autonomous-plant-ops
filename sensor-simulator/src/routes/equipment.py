@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 from .. import equipment as eq
 from ..equipment import EQUIPMENT, from_dict, to_dict
+from ..logsafe import clean
 from ..models import EquipmentDef
 from ..simulator import simulator
 
@@ -34,7 +35,7 @@ async def add_equipment(body: EquipmentDef):
     EQUIPMENT[body.equipment_id] = from_dict(body.model_dump())
     simulator.ensure(body.equipment_id)
     eq.save()
-    logger.info("Equipment added: %s", body.equipment_id)
+    logger.info("Equipment added: %s", clean(body.equipment_id))
     return to_dict(EQUIPMENT[body.equipment_id])
 
 
@@ -55,7 +56,7 @@ async def update_equipment(eid: str, body: EquipmentDef):
     EQUIPMENT[cfg.equipment_id] = cfg
     simulator.ensure(cfg.equipment_id)
     eq.save()
-    logger.info("Equipment updated: %s", eid)
+    logger.info("Equipment updated: %s", clean(eid))
     return to_dict(cfg)
 
 
@@ -68,7 +69,7 @@ async def delete_equipment(eid: str):
     EQUIPMENT.pop(eid, None)
     simulator.forget(eid)
     eq.save()
-    logger.info("Equipment deleted: %s", eid)
+    logger.info("Equipment deleted: %s", clean(eid))
     return {"success": True, "deleted": eid}
 
 

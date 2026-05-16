@@ -24,7 +24,8 @@
           "service": { "type": "boolean" },
           "healthPath": { "type": "string" },
           "env": { "type": "object" },
-          "resources": { "type": "object" }
+          "resources": { "type": "object" },
+          "readOnlyRootFilesystem": { "type": "boolean" }
         },
         "required": ["image"]
       }
@@ -104,6 +105,16 @@
             "annotations": { "type": "object" }
           }
         }
+      }
+    },
+    "securityContext": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "runAsUser": { "type": "integer" },
+        "runAsGroup": { "type": "integer" },
+        "fsGroup": { "type": "integer" },
+        "readOnlyRootFilesystem": { "type": "boolean" }
       }
     }
   },
