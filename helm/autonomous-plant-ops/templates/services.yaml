@@ -97,10 +97,12 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 20
           {{- end }}
-          {{- with $svc.resources }}
           resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- if $svc.resources }}
+            {{- toYaml $svc.resources | nindent 12 }}
+            {{- else }}
+            {{- toYaml $.Values.defaultResources | nindent 12 }}
+            {{- end }}
           {{- $persist := and $svc.persistence $svc.persistence.enabled }}
           {{- $tmp := $.Values.securityContext.enabled }}
           {{- if or $persist $tmp }}

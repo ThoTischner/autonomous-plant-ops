@@ -16,4 +16,6 @@ COPY --from=build /install /usr/local
 COPY --from=build /app/src ./src
 USER 65532:65532
 EXPOSE 8002
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD ["python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8002/health').status==200 else 1)"]
 ENTRYPOINT ["python3", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8002"]

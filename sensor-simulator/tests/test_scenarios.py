@@ -1,6 +1,3 @@
-import pytest
-
-
 
 async def test_trigger_valid_scenario(client):
     resp = await client.post("/scenarios/trigger", json={
