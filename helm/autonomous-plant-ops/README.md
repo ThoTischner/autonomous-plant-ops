@@ -2,7 +2,7 @@
 
 KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 
-![Version: 0.2.2](https://img.shields.io/badge/Version-0.2.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.2](https://img.shields.io/badge/AppVersion-1.0.2-informational?style=flat-square)
+![Version: 0.2.3](https://img.shields.io/badge/Version-0.2.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.3](https://img.shields.io/badge/AppVersion-1.0.3-informational?style=flat-square)
 
 ## Installation
 
@@ -66,9 +66,9 @@ kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 | services.dashboard-api.port | int | `8003` | Container-/Service-Port. |
 | services.dashboard-api.healthPath | string | `"/health"` | HTTP-Pfad für Probes. |
 | services.dashboard-api.resources | object | `{}` | Ressourcen-Requests/Limits. |
-| services.dashboard-frontend.image | string | `"autonomous-plant-ops/dashboard-frontend"` | Image-Repository (nginx; proxyt `/api/` zur dashboard-api). |
+| services.dashboard-frontend.image | string | `"autonomous-plant-ops/dashboard-frontend"` | Image-Repository (Chainguard/Wolfi-nginx, nonroot; proxyt `/api/` zur dashboard-api). |
 | services.dashboard-frontend.replicas | int | `1` | Replica-Anzahl. |
-| services.dashboard-frontend.port | int | `80` | Container-/Service-Port. |
+| services.dashboard-frontend.port | int | `8080` | Container-/Service-Port (nonroot-nginx -> unprivilegierter Port 8080). |
 | services.dashboard-frontend.resources | object | `{}` | Ressourcen-Requests/Limits. |
 | ollama.mode | string | `"external"` | Betriebsmodus: `external` (externer Endpoint) oder `in-cluster` (Ollama im Cluster). |
 | ollama.external.host | string | `"http://host.docker.internal:11434"` | Voll qualifizierte URL des externen Ollama-Servers (nur bei `mode: external`). |
@@ -85,12 +85,24 @@ kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 | ollama.inCluster.gpu.count | int | `1` | Anzahl GPUs. |
 | ollama.inCluster.gpu.nodeSelector | object | `{}` | NodeSelector für GPU-Nodes. |
 | ollama.inCluster.gpu.tolerations | list | `[]` | Tolerations für GPU-Nodes. |
-| ingress.enabled | bool | `true` | Ingress aktivieren. |
-| ingress.className | string | `"nginx"` | IngressClass. |
+| frontend | object | `{"service":{"annotations":{},"loadBalancerIP":"","nodePort":"","type":"ClusterIP"}}` | Exposure des nutzerseitigen Einstiegspunkts (dashboard-frontend). Interne Services bleiben immer ClusterIP. Frei mit `ingress` kombinierbar. |
+| frontend.service.type | string | `"ClusterIP"` | Service-Typ: `ClusterIP` | `NodePort` | `LoadBalancer`. |
+| frontend.service.nodePort | string | `""` | Fester NodePort (nur `type: NodePort`; leer = automatisch 30000–32767). |
+| frontend.service.loadBalancerIP | string | `""` | Gewünschte LoadBalancer-IP (nur `type: LoadBalancer`, optional). |
+| frontend.service.annotations | object | `{}` | Zusätzliche Service-Annotations (z. B. Cloud-LB-Tuning). |
+| ingress.enabled | bool | `true` | Ingress aktivieren (unabhängig vom `frontend.service.type`). |
+| ingress.className | string | `"nginx"` | IngressClass-Name: `nginx` | `traefik` | eigener Name | `""` (Default-Class). |
+| ingress.controller | string | `"nginx"` | Annotation-Preset passend zum Controller: `nginx` | `traefik` | `none`. Hält den SSE-Stream `/events/stream` offen (kein Buffering, lange Timeouts). |
 | ingress.host | string | `"plant-ops.local"` | Hostname. |
-| ingress.annotations | object | `{"nginx.ingress.kubernetes.io/proxy-buffering":"off","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600"}` | Annotations (Defaults halten den SSE-Stream `/events/stream` offen). |
+| ingress.path | string | `"/"` | HTTP-Pfad. |
+| ingress.pathType | string | `"Prefix"` | pathType: `Prefix` | `Exact` | `ImplementationSpecific`. |
+| ingress.annotations | object | `{}` | Zusätzliche Annotations (werden über das Controller-Preset gemerged, können es überschreiben). |
 | ingress.tls.enabled | bool | `false` | TLS aktivieren. |
-| ingress.tls.secretName | string | `""` | Name des TLS-Secrets. |
+| ingress.tls.secretName | string | `""` | Name des TLS-Secrets (leer = `<Release>-tls`). |
+| ingress.certManager | object | `{"enabled":false,"issuerKind":"ClusterIssuer","issuerName":""}` | cert-manager-Integration: setzt die Issuer-Annotation und aktiviert TLS automatisch. |
+| ingress.certManager.enabled | bool | `false` | cert-manager-Ausstellung aktivieren. |
+| ingress.certManager.issuerName | string | `""` | Name des Issuers/ClusterIssuers. |
+| ingress.certManager.issuerKind | string | `"ClusterIssuer"` | Issuer-Art: `ClusterIssuer` | `Issuer`. |
 | podAnnotations | object | `{}` | Pod-Annotations (alle Deployments). |
 | nodeSelector | object | `{}` | NodeSelector (alle Deployments). |
 | tolerations | list | `[]` | Tolerations (alle Deployments). |

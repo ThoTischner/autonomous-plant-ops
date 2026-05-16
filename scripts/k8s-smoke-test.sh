@@ -17,7 +17,7 @@ declare -A HEALTH=(
   [sensor-simulator]="http://sensor-simulator:8001/health"
   [llm-agent]="http://llm-agent:8002/health"
   [dashboard-api]="http://dashboard-api:8003/health"
-  [dashboard-frontend]="http://dashboard-frontend:80/"
+  [dashboard-frontend]="http://dashboard-frontend:8080/"
 )
 
 fail=0

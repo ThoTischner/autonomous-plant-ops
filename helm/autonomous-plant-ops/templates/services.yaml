@@ -109,6 +109,12 @@ spec:
   {{- end }}
 {{- end }}
 {{- if ne $svc.service false }}
+{{- /* Nur der nutzerseitige dashboard-frontend ist exponierbar; interne
+       Services bleiben immer ClusterIP. */ -}}
+{{- $fe := eq $name "dashboard-frontend" -}}
+{{- $feSvc := dict -}}
+{{- if and $fe $.Values.frontend }}{{ $feSvc = $.Values.frontend.service }}{{ end -}}
+{{- $svcType := ternary ($feSvc.type | default "ClusterIP") "ClusterIP" $fe }}
 ---
 apiVersion: v1
 kind: Service
@@ -117,13 +123,23 @@ metadata:
   labels:
     {{- include "apo.labels" $ | nindent 4 }}
     {{- include "apo.selectorLabels" $name | nindent 4 }}
+  {{- if and $fe $feSvc.annotations }}
+  annotations:
+    {{- toYaml $feSvc.annotations | nindent 4 }}
+  {{- end }}
 spec:
-  type: ClusterIP
+  type: {{ $svcType }}
+  {{- if and (eq $svcType "LoadBalancer") $fe $feSvc.loadBalancerIP }}
+  loadBalancerIP: {{ $feSvc.loadBalancerIP | quote }}
+  {{- end }}
   selector:
     {{- include "apo.selectorLabels" $name | nindent 4 }}
   ports:
     - name: http
       port: {{ $svc.port }}
       targetPort: http
+      {{- if and (eq $svcType "NodePort") $fe $feSvc.nodePort }}
+      nodePort: {{ $feSvc.nodePort }}
+      {{- end }}
 {{- end }}
 {{- end }}

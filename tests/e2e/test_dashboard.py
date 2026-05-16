@@ -19,7 +19,7 @@ import re
 import pytest
 from playwright.sync_api import sync_playwright
 
-FRONTEND = "http://dashboard-frontend:80/"
+FRONTEND = "http://dashboard-frontend:8080/"
 
 # Known-benign Recharts mid-relayout SVG coordinate warning.
 BENIGN = re.compile(
