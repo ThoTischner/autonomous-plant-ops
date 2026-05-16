@@ -5,6 +5,60 @@ entries:
       artifacthub.io/category: monitoring-logging
       artifacthub.io/changes: |
         - kind: security
+          description: "Code-Scanning auf 0: log-injection-Sanitizer CodeQL-konform, empty-except/unused-import bereinigt"
+        - kind: security
+          description: "Alle Test-/CI-Dockerfiles ebenfalls per SHA256-Digest gepinnt (DS-0002)"
+        - kind: added
+          description: "HEALTHCHECK in den HTTP-Service-Images; Default-Resource-Requests/Limits in allen Deployments (KSV)"
+        - kind: security
+          description: "Basis: 0-CVE Chainguard/Wolfi-Images, gehärteter SecurityContext, SSRF-Fix, Digest-Pinning, CI Trivy/CodeQL/SBOM/Dependabot"
+      artifacthub.io/containsSecurityUpdates: "true"
+      artifacthub.io/images: |
+        - name: sensor-simulator
+          image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.6
+        - name: llm-agent
+          image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.6
+        - name: orchestrator
+          image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.6
+        - name: dashboard-api
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.6
+        - name: dashboard-frontend
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.6
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: Quellcode
+          url: https://github.com/ThoTischner/autonomous-plant-ops
+        - name: Support
+          url: https://github.com/ThoTischner/autonomous-plant-ops/issues
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
+    appVersion: 1.0.6
+    created: "2026-05-16T10:34:40.038369788Z"
+    description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor
+      Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
+    digest: b1857147b4aa17ded7e3265f7cb74d4c4c78f51a25cbd12610a7494f9b46d018
+    home: https://github.com/ThoTischner/autonomous-plant-ops
+    icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
+    keywords:
+    - llm
+    - ollama
+    - industrial-monitoring
+    - fastapi
+    - observability
+    maintainers:
+    - name: ThoTischner
+      url: https://github.com/ThoTischner
+    name: autonomous-plant-ops
+    sources:
+    - https://github.com/ThoTischner/autonomous-plant-ops
+    type: application
+    urls:
+    - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.2.6/autonomous-plant-ops-0.2.6.tgz
+    version: 0.2.6
+  - annotations:
+      artifacthub.io/category: monitoring-logging
+      artifacthub.io/changes: |
+        - kind: security
           description: "SSRF behoben (CodeQL py/partial-ssrf): strikte Allowlist + URL-Encoding für equipment_id im Control-Proxy"
         - kind: security
           description: "Log-Injection behoben (CodeQL py/log-injection): CR/LF-Sanitizing aller user-kontrollierten Log-Werte"
@@ -369,4 +423,4 @@ entries:
     urls:
     - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.1.0/autonomous-plant-ops-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-16T08:51:10.106511759Z"
+generated: "2026-05-16T10:34:40.038406407Z"
