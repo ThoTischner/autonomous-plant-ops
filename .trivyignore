@@ -1,0 +1,17 @@
+# Dokumentierte, bewusst akzeptierte Trivy-Misconfig-Ausnahmen.
+# (Keine CVEs — die Images sind 0-CVE; dies sind Best-Practice-Checks,
+#  die im Kubernetes-Kontext nicht greifen bzw. bewusste Trade-offs sind.)
+
+# DS-0026: "no HEALTHCHECK". Die HTTP-Services (sensor-simulator,
+# llm-agent, dashboard-api) HABEN einen HEALTHCHECK. Für orchestrator
+# (reiner Loop ohne HTTP), das distroless Chainguard-nginx-Frontend
+# (kein Shell/Interpreter für ein HEALTHCHECK-CMD) und die ephemeren
+# *.test / CI-Images ist HEALTHCHECK nicht anwendbar — im Cluster sind
+# Kubernetes liveness/readiness-Probes die maßgebliche Health-Quelle.
+DS-0026
+
+# KSV-0014: readOnlyRootFilesystem. Gilt für 4/5 Deployments (true).
+# Ausnahme dashboard-frontend: nginx benötigt beschreibbare Laufzeit-
+# Pfade. Risiko mitigiert durch runAsNonRoot + drop ALL capabilities
+# + allowPrivilegeEscalation=false + seccomp RuntimeDefault.
+KSV0014

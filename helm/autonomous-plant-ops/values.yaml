@@ -180,6 +180,16 @@ tolerations: []
 # -- Affinity (alle Deployments).
 affinity: {}
 
+# -- Default-Ressourcen (greifen, wenn ein Service keine eigenen `resources`
+# setzt). Setzt requests UND limits -> klärt die KSV-Resource-Checks.
+defaultResources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
 # -- Gehärteter SecurityContext für alle Deployments (passt zu den nonroot
 # Wolfi/Chainguard-Images: runAsNonRoot, Caps drop ALL, no privilege
 # escalation, seccomp RuntimeDefault). Schreibzugriff nur über ein

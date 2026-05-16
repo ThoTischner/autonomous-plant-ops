@@ -50,8 +50,8 @@ async def wait_for_services(client: httpx.AsyncClient) -> None:
                 if r.status_code == 200:
                     log.info("  %s ready", name)
                     break
-            except Exception:
-                pass
+            except Exception as e:
+                log.debug("  %s not ready yet: %s", name, e)
             await asyncio.sleep(2)
         else:
             log.warning("  %s not ready after 120s, continuing anyway", name)

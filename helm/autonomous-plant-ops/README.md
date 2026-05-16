@@ -2,7 +2,7 @@
 
 KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 
-![Version: 0.2.5](https://img.shields.io/badge/Version-0.2.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5](https://img.shields.io/badge/AppVersion-1.0.5-informational?style=flat-square)
+![Version: 0.2.6](https://img.shields.io/badge/Version-0.2.6-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.6](https://img.shields.io/badge/AppVersion-1.0.6-informational?style=flat-square)
 
 ## Installation
 
@@ -108,6 +108,7 @@ kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 | nodeSelector | object | `{}` | NodeSelector (alle Deployments). |
 | tolerations | list | `[]` | Tolerations (alle Deployments). |
 | affinity | object | `{}` | Affinity (alle Deployments). |
+| defaultResources | object | `{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | Default-Ressourcen (greifen, wenn ein Service keine eigenen `resources` setzt). Setzt requests UND limits -> klärt die KSV-Resource-Checks. |
 | securityContext | object | `{"enabled":true,"fsGroup":65532,"readOnlyRootFilesystem":true,"runAsGroup":65532,"runAsUser":65532}` | Gehärteter SecurityContext für alle Deployments (passt zu den nonroot Wolfi/Chainguard-Images: runAsNonRoot, Caps drop ALL, no privilege escalation, seccomp RuntimeDefault). Schreibzugriff nur über ein /tmp-emptyDir und persistente Volumes. |
 | securityContext.enabled | bool | `true` | SecurityContext aktivieren. |
 | securityContext.runAsUser | int | `65532` | UID (nonroot, entspricht den Images). |
