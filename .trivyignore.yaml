@@ -1,0 +1,36 @@
+# Begruendete, bewusst akzeptierte Trivy-Misconfig-Ausnahmen.
+# Keine CVEs — die 5 Laufzeit-Images sind 0-CVE. Dies sind
+# Best-Practice-Checks, die im Helm/K8s-Kontext nicht greifen bzw.
+# bewusste, mitigierte Trade-offs sind.
+misconfigurations:
+  # "no HEALTHCHECK": HTTP-Services HABEN einen HEALTHCHECK; im Cluster
+  # sind die Kubernetes liveness/readiness-Probes maßgeblich.
+  - id: DS-0026
+
+  # readOnlyRootFilesystem: 4/5 Deployments true. Ausnahme
+  # dashboard-frontend (nginx braucht beschreibbare Pfade) — mitigiert
+  # durch runAsNonRoot + drop ALL caps + no-privesc + seccomp.
+  - id: KSV-0014
+
+  # "Workloads in default namespace": Chart setzt bewusst keinen
+  # Namespace — Helm deployt in den per --namespace gewaehlten
+  # Release-Namespace (Hardcoden waere ein Helm-Anti-Pattern).
+  - id: KSV-0110
+
+  # "Restrict images to trusted registries": Images sind per
+  # SHA256-Digest aus der projekteigenen ghcr.io-Registry gepinnt;
+  # eine Registry-Allowlist ist Cluster-Policy, nicht Chart-Sache.
+  - id: KSV-0125
+
+  # "no non-root USER": gilt nur fuer die ephemeren, NIE deployten
+  # Build-/CI-Test-Images (run-and-exit in der Pipeline). Die 5
+  # Laufzeit-Images deklarieren alle USER 65532 und unterliegen
+  # DS-0002 weiterhin.
+  - id: DS-0002
+    paths:
+      - "sensor-simulator/Dockerfile.test"
+      - "llm-agent/Dockerfile.test"
+      - "dashboard/api/Dockerfile.test"
+      - "dashboard/frontend/Dockerfile.test"
+      - "tests/Dockerfile"
+      - "tests/e2e/Dockerfile"
