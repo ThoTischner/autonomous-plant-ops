@@ -3,7 +3,9 @@ proxy scenario/reset/prompt calls to sensor-simulator and llm-agent."""
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Optional
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -13,6 +15,18 @@ SENSOR_URL = os.environ.get("SENSOR_URL", "http://sensor-simulator:8001")
 AGENT_URL = os.environ.get("AGENT_URL", "http://llm-agent:8002")
 
 router = APIRouter(prefix="/control", tags=["control"])
+
+# Equipment IDs are short alphanumerics (FL-401, TR-501, IT-1). Anything
+# else is rejected before it can reach a proxied URL — this is the SSRF
+# guard: a strict allowlist + percent-encoding so a crafted id can never
+# alter the request path/host of the upstream call.
+_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def _safe_id(eid: str) -> str:
+    if not _ID_RE.fullmatch(eid):
+        raise HTTPException(status_code=400, detail="Ungültige equipment_id")
+    return quote(eid, safe="")
 
 
 class ScenarioBody(BaseModel):
@@ -84,12 +98,14 @@ async def add_equipment(payload: dict):
 
 @router.put("/equipment/{eid}")
 async def update_equipment(eid: str, payload: dict):
-    return await _proxy("PUT", f"{SENSOR_URL}/equipment/{eid}", json=payload)
+    safe = _safe_id(eid)
+    return await _proxy("PUT", f"{SENSOR_URL}/equipment/{safe}", json=payload)
 
 
 @router.delete("/equipment/{eid}")
 async def delete_equipment(eid: str):
-    return await _proxy("DELETE", f"{SENSOR_URL}/equipment/{eid}")
+    safe = _safe_id(eid)
+    return await _proxy("DELETE", f"{SENSOR_URL}/equipment/{safe}")
 
 
 @router.post("/equipment/reset")

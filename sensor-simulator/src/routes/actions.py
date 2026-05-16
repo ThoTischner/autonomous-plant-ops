@@ -6,6 +6,7 @@ import time
 from fastapi import APIRouter
 
 from ..equipment import EQUIPMENT
+from ..logsafe import clean
 from ..models import ActionRequest, ActionResponse, ActionType
 from ..simulator import simulator
 
@@ -81,7 +82,8 @@ async def execute_action(req: ActionRequest):
         case ActionType.NO_ACTION:
             msg = f"No action taken for {cfg.name}"
 
-    logger.info("Action executed: %s on %s — %s", req.action.value, req.equipment_id, msg)
+    logger.info("Action executed: %s on %s — %s",
+                clean(req.action.value), clean(req.equipment_id), clean(msg))
 
     return ActionResponse(
         success=True,
