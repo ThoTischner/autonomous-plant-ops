@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 from contextlib import asynccontextmanager
 
@@ -20,8 +19,8 @@ async def lifespan(app: FastAPI):
     yield
     simulator.stop()
     task.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await task
+    # Await the cancelled background task, swallowing its CancelledError.
+    await asyncio.gather(task, return_exceptions=True)
 
 
 app = FastAPI(title="Sensor Simulator", version="1.0.0", lifespan=lifespan)
