@@ -5,27 +5,27 @@ metadata:
   name: autonomous-plant-ops
   labels:
     {{- include "apo.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- include "apo.ingressAnnotations" . | nindent 4 }}
 spec:
+  {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
-  {{- if .Values.ingress.tls.enabled }}
+  {{- end }}
+  {{- if eq (include "apo.tlsEnabled" .) "true" }}
   tls:
     - hosts:
         - {{ .Values.ingress.host | quote }}
-      secretName: {{ .Values.ingress.tls.secretName }}
+      secretName: {{ include "apo.tlsSecret" . }}
   {{- end }}
   rules:
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
           # Das Frontend (nginx) liefert die UI und proxyt /api/ -> dashboard-api.
-          # Der SSE-Stream /events/stream laeuft ebenfalls hierueber; die
-          # proxy-buffering/timeout-Annotations in values.yaml halten ihn offen.
-          - path: /
-            pathType: Prefix
+          # Der SSE-Stream /events/stream laeuft ebenfalls hierueber; das
+          # Controller-Annotation-Preset (apo.ingressAnnotations) haelt ihn offen.
+          - path: {{ .Values.ingress.path | default "/" }}
+            pathType: {{ .Values.ingress.pathType | default "Prefix" }}
             backend:
               service:
                 name: dashboard-frontend

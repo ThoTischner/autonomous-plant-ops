@@ -166,7 +166,7 @@ def test_dashboard_api_post_scenario_event(dashboard_client):
 
 # --- Control passthrough (dashboard-api -> sensor-simulator / llm-agent) ---
 
-FRONTEND_URL = "http://dashboard-frontend:80"
+FRONTEND_URL = "http://dashboard-frontend:8080"
 
 
 @pytest.fixture(scope="module")

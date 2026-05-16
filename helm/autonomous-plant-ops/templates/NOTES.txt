@@ -4,7 +4,7 @@ Services:
   - sensor-simulator    :8001
   - llm-agent           :8002
   - dashboard-api       :8003
-  - dashboard-frontend  :80
+  - dashboard-frontend  :8080
   - orchestrator        (Loop, kein Service)
 
 Ollama-Modus: {{ .Values.ollama.mode }}
@@ -18,14 +18,29 @@ Ollama-Modus: {{ .Values.ollama.mode }}
 
 {{- if .Values.ingress.enabled }}
 
-Dashboard erreichbar ueber:
-  http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}
+Dashboard via Ingress ({{ .Values.ingress.className | default "default-class" }}{{ if .Values.ingress.controller }}, Preset: {{ .Values.ingress.controller }}{{ end }}):
+  http{{ if eq (include "apo.tlsEnabled" .) "true" }}s{{ end }}://{{ .Values.ingress.host }}
+{{- if .Values.ingress.certManager.enabled }}
+  TLS-Zertifikat via cert-manager ({{ .Values.ingress.certManager.issuerKind }}: {{ .Values.ingress.certManager.issuerName }}) -> Secret {{ include "apo.tlsSecret" . }}
+{{- end }}
 
 Falls {{ .Values.ingress.host }} nicht aufloest, /etc/hosts ergaenzen:
   <INGRESS-IP>  {{ .Values.ingress.host }}
-{{- else }}
+{{- end }}
+{{- $fe := .Values.frontend.service }}
+{{- if eq $fe.type "NodePort" }}
 
-Kein Ingress aktiv. Zugriff per port-forward:
-  kubectl port-forward svc/dashboard-frontend 8080:80
+Frontend-Service als NodePort:
+  kubectl get svc dashboard-frontend -o jsonpath='{.spec.ports[0].nodePort}'
+  -> http://<NODE-IP>:<NODEPORT>
+{{- else if eq $fe.type "LoadBalancer" }}
+
+Frontend-Service als LoadBalancer:
+  kubectl get svc dashboard-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+  -> http://<EXTERNAL-IP>
+{{- else if not .Values.ingress.enabled }}
+
+Kein Ingress, ClusterIP-Service. Zugriff per port-forward:
+  kubectl port-forward svc/dashboard-frontend 8080:8080
   -> http://localhost:8080
 {{- end }}

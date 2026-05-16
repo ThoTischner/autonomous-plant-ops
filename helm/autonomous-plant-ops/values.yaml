@@ -80,12 +80,12 @@ services:
     resources: {}
 
   dashboard-frontend:
-    # -- Image-Repository (nginx; proxyt `/api/` zur dashboard-api).
+    # -- Image-Repository (Chainguard/Wolfi-nginx, nonroot; proxyt `/api/` zur dashboard-api).
     image: autonomous-plant-ops/dashboard-frontend
     # -- Replica-Anzahl.
     replicas: 1
-    # -- Container-/Service-Port.
-    port: 80
+    # -- Container-/Service-Port (nonroot-nginx -> unprivilegierter Port 8080).
+    port: 8080
     # -- Ressourcen-Requests/Limits.
     resources: {}
 
@@ -127,23 +127,47 @@ ollama:
       # -- Tolerations für GPU-Nodes.
       tolerations: []
 
+# -- Exposure des nutzerseitigen Einstiegspunkts (dashboard-frontend). Interne
+# Services bleiben immer ClusterIP. Frei mit `ingress` kombinierbar.
+frontend:
+  service:
+    # -- Service-Typ: `ClusterIP` | `NodePort` | `LoadBalancer`.
+    type: ClusterIP
+    # -- Fester NodePort (nur `type: NodePort`; leer = automatisch 30000–32767).
+    nodePort: ""
+    # -- Gewünschte LoadBalancer-IP (nur `type: LoadBalancer`, optional).
+    loadBalancerIP: ""
+    # -- Zusätzliche Service-Annotations (z. B. Cloud-LB-Tuning).
+    annotations: {}
+
 ingress:
-  # -- Ingress aktivieren.
+  # -- Ingress aktivieren (unabhängig vom `frontend.service.type`).
   enabled: true
-  # -- IngressClass.
+  # -- IngressClass-Name: `nginx` | `traefik` | eigener Name | `""` (Default-Class).
   className: nginx
+  # -- Annotation-Preset passend zum Controller: `nginx` | `traefik` | `none`. Hält den SSE-Stream `/events/stream` offen (kein Buffering, lange Timeouts).
+  controller: nginx
   # -- Hostname.
   host: plant-ops.local
-  # -- Annotations (Defaults halten den SSE-Stream `/events/stream` offen).
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  # -- HTTP-Pfad.
+  path: /
+  # -- pathType: `Prefix` | `Exact` | `ImplementationSpecific`.
+  pathType: Prefix
+  # -- Zusätzliche Annotations (werden über das Controller-Preset gemerged, können es überschreiben).
+  annotations: {}
   tls:
     # -- TLS aktivieren.
     enabled: false
-    # -- Name des TLS-Secrets.
+    # -- Name des TLS-Secrets (leer = `<Release>-tls`).
     secretName: ""
+  # -- cert-manager-Integration: setzt die Issuer-Annotation und aktiviert TLS automatisch.
+  certManager:
+    # -- cert-manager-Ausstellung aktivieren.
+    enabled: false
+    # -- Name des Issuers/ClusterIssuers.
+    issuerName: ""
+    # -- Issuer-Art: `ClusterIssuer` | `Issuer`.
+    issuerKind: ClusterIssuer
 
 # -- Pod-Annotations (alle Deployments).
 podAnnotations: {}
