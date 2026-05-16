@@ -5,6 +5,58 @@ entries:
       artifacthub.io/category: monitoring-logging
       artifacthub.io/changes: |
         - kind: security
+          description: "Code Scanning vollständig auf 0: CodeQL 0; Trivy DS-0002 behoben — dashboard-frontend deklariert USER 65532"
+        - kind: security
+          description: "Strukturierte .trivyignore.yaml (path-skopiert) + trivyignores in der Security-CI; DS-0002 nur für ephemere CI-Test-Images ausgenommen"
+        - kind: security
+          description: "Basis: 0-CVE Chainguard/Wolfi-Images, gehärteter SecurityContext, Resource-Limits, Digest-Pinning, CI Trivy/CodeQL/SBOM/Dependabot"
+      artifacthub.io/containsSecurityUpdates: "true"
+      artifacthub.io/images: |
+        - name: sensor-simulator
+          image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.8
+        - name: llm-agent
+          image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.8
+        - name: orchestrator
+          image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.8
+        - name: dashboard-api
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.8
+        - name: dashboard-frontend
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.8
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: Quellcode
+          url: https://github.com/ThoTischner/autonomous-plant-ops
+        - name: Support
+          url: https://github.com/ThoTischner/autonomous-plant-ops/issues
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
+    appVersion: 1.0.8
+    created: "2026-05-16T11:22:52.324538136Z"
+    description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor
+      Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
+    digest: eff2e786cffe33eac9e6da201a7ef0d29834e2bf25d11a71717f2d7ed8935eb3
+    home: https://github.com/ThoTischner/autonomous-plant-ops
+    icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
+    keywords:
+    - llm
+    - ollama
+    - industrial-monitoring
+    - fastapi
+    - observability
+    maintainers:
+    - name: ThoTischner
+      url: https://github.com/ThoTischner
+    name: autonomous-plant-ops
+    sources:
+    - https://github.com/ThoTischner/autonomous-plant-ops
+    type: application
+    urls:
+    - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.2.8/autonomous-plant-ops-0.2.8.tgz
+    version: 0.2.8
+  - annotations:
+      artifacthub.io/category: monitoring-logging
+      artifacthub.io/changes: |
+        - kind: security
           description: "Code-Scanning auf ~0: letzter CodeQL-Note behoben (asyncio.gather); toter n8n-Code entfernt (DS-0001/DS-0002)"
         - kind: security
           description: ".trivyignore mit begründeten Ausnahmen (DS-0026, KSV-0014/0110/0125 — Helm/K8s-Kontext)"
@@ -477,4 +529,4 @@ entries:
     urls:
     - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.1.0/autonomous-plant-ops-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-16T10:53:40.049882117Z"
+generated: "2026-05-16T11:22:52.324594773Z"
