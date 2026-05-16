@@ -5,6 +5,60 @@ entries:
       artifacthub.io/category: monitoring-logging
       artifacthub.io/changes: |
         - kind: security
+          description: "Image-Härtung: Python-Services auf distroless (0 fixbare HIGH/CRITICAL), Frontend auf Chainguard/Wolfi-nginx (0 CVE), nonroot"
+        - kind: added
+          description: "Flexibler Ingress/Exposure via values: nginx/traefik-Presets, NodePort/LoadBalancer/ClusterIP, cert-manager (Issuer/ClusterIssuer + Auto-TLS)"
+        - kind: changed
+          description: "dashboard-frontend lauscht als nonroot auf Port 8080 (zuvor 80)"
+        - kind: security
+          description: "Übernommen aus 1.0.2: CVE-2025-62727 (starlette/fastapi), CVE-2026-4800 (lodash); CI mit Trivy/CodeQL/SBOM/Dependabot"
+      artifacthub.io/containsSecurityUpdates: "true"
+      artifacthub.io/images: |
+        - name: sensor-simulator
+          image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.3
+        - name: llm-agent
+          image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.3
+        - name: orchestrator
+          image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.3
+        - name: dashboard-api
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.3
+        - name: dashboard-frontend
+          image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.3
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: Quellcode
+          url: https://github.com/ThoTischner/autonomous-plant-ops
+        - name: Support
+          url: https://github.com/ThoTischner/autonomous-plant-ops/issues
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
+    appVersion: 1.0.3
+    created: "2026-05-16T00:17:41.400523023Z"
+    description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor
+      Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
+    digest: 2fd2e704b35cae71b1341f41b42ff73b2f55ba0e102aa5cc217ba867966a95e4
+    home: https://github.com/ThoTischner/autonomous-plant-ops
+    icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
+    keywords:
+    - llm
+    - ollama
+    - industrial-monitoring
+    - fastapi
+    - observability
+    maintainers:
+    - name: ThoTischner
+      url: https://github.com/ThoTischner
+    name: autonomous-plant-ops
+    sources:
+    - https://github.com/ThoTischner/autonomous-plant-ops
+    type: application
+    urls:
+    - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.2.3/autonomous-plant-ops-0.2.3.tgz
+    version: 0.2.3
+  - annotations:
+      artifacthub.io/category: monitoring-logging
+      artifacthub.io/changes: |
+        - kind: security
           description: "CVE-2025-62727 behoben: starlette auf 0.49.1, fastapi auf 0.136.1 in allen FastAPI-Services (DoS via Range-Header)"
         - kind: security
           description: "CVE-2026-4800 behoben: lodash auf 4.18.1 (RCE, transitiv via recharts); vite 6.4.2, postcss 8.5.14"
@@ -205,4 +259,4 @@ entries:
     urls:
     - https://github.com/ThoTischner/autonomous-plant-ops/releases/download/autonomous-plant-ops-0.1.0/autonomous-plant-ops-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-15T23:10:20.051807672Z"
+generated: "2026-05-16T00:17:41.400546558Z"
