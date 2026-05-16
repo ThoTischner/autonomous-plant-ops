@@ -2,8 +2,8 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 type: application
-version: 0.2.7
-appVersion: "1.0.7"
+version: 0.2.8
+appVersion: "1.0.8"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
 sources:
@@ -29,21 +29,19 @@ annotations:
   artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/images: |
     - name: sensor-simulator
-      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.7
+      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.8
     - name: llm-agent
-      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.7
+      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.8
     - name: orchestrator
-      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.7
+      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.8
     - name: dashboard-api
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.7
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.8
     - name: dashboard-frontend
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.7
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.8
   artifacthub.io/changes: |
     - kind: security
-      description: "Code-Scanning auf ~0: letzter CodeQL-Note behoben (asyncio.gather); toter n8n-Code entfernt (DS-0001/DS-0002)"
+      description: "Code Scanning vollständig auf 0: CodeQL 0; Trivy DS-0002 behoben — dashboard-frontend deklariert USER 65532"
     - kind: security
-      description: ".trivyignore mit begründeten Ausnahmen (DS-0026, KSV-0014/0110/0125 — Helm/K8s-Kontext)"
-    - kind: changed
-      description: "Frontend-Image nur per Digest referenziert (kein :latest mehr)"
+      description: "Strukturierte .trivyignore.yaml (path-skopiert) + trivyignores in der Security-CI; DS-0002 nur für ephemere CI-Test-Images ausgenommen"
     - kind: security
       description: "Basis: 0-CVE Chainguard/Wolfi-Images, gehärteter SecurityContext, Resource-Limits, Digest-Pinning, CI Trivy/CodeQL/SBOM/Dependabot"
