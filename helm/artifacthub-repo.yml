@@ -1,6 +1,8 @@
 # ArtifactHub Repository-Metadaten.
-# Wird vom chart-release-Workflow in den Root der gh-pages-Branch publiziert,
-# damit ArtifactHub die Repo-Ownership verifizieren kann.
+# Wird vom chart-release-Workflow publiziert: in den Root der gh-pages-Branch
+# UND als OCI-Artefakt unter dem Tag ':artifacthub.io' in der OCI-Registry
+# (ghcr.io/<owner>/charts/autonomous-plant-ops) — Letzteres ist die Quelle,
+# aus der ArtifactHub beim OCI-Repo die Ownership/Verified-Publisher liest.
 # repositoryID aus der ArtifactHub-UI (Control Panel -> Repositories).
 repositoryID: e4487a64-d7e0-49ae-b35e-80e256c9a1eb
 owners:
