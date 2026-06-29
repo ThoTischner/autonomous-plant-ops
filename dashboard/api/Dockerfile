@@ -1,5 +1,5 @@
 # --- build: glibc manylinux wheels (reproducible, cp312) ---
-FROM python:3.12-slim-bookworm@sha256:d193c6f51a7dbd10395d6328de3a7edb0516fb0608ca138036576f574c3e07d2 AS build
+FROM python:3.12-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
@@ -7,7 +7,7 @@ COPY src/ src/
 
 # --- runtime: Chainguard/Wolfi base (~0 CVE, continuously patched),
 #     pinned python-3.12, nonroot ---
-FROM cgr.dev/chainguard/wolfi-base@sha256:0cff4df29a6597173dc8b813787318150141eb96ac783dc3ff4f5ff52c49a1e2
+FROM cgr.dev/chainguard/wolfi-base@sha256:2f7a5c164eafbdbe46fe1d91bd1ab4c8cb5c2bdbd10641c3d61bd39962384cdb
 RUN apk add --no-cache python-3.12 && ln -sf /usr/bin/python3.12 /usr/bin/python3
 WORKDIR /app
 ENV PYTHONPATH=/usr/local/lib/python3.12/site-packages \

@@ -9,10 +9,12 @@ on:
 permissions:
   contents: write
   pages: write
+  packages: write
+  id-token: write # keyless cosign signing via GitHub OIDC
 
 jobs:
   release:
-    name: "Release Helm chart -> gh-pages"
+    name: "Release Helm chart -> gh-pages + OCI (cosign-signed)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,3 +48,40 @@ jobs:
             git commit -m "chore: update artifacthub-repo.yml"
             git push origin gh-pages
           fi
+
+      # --- Signed badge on ArtifactHub: push the chart as an OCI artifact and
+      #     sign it keyless with cosign (Sigstore, GitHub OIDC — no key to store).
+      #     ArtifactHub auto-detects the cosign signature stored alongside the
+      #     chart in the same registry. ---
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package, push (OCI) and cosign-sign the chart
+        run: |
+          set -euo pipefail
+          OWNER_LC="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          OCI_REPO="oci://ghcr.io/${OWNER_LC}/charts"
+          CHART_DIR="helm/autonomous-plant-ops"
+          NAME="$(awk '/^name:/{print $2; exit}' "$CHART_DIR/Chart.yaml")"
+          VERSION="$(awk '/^version:/{print $2; exit}' "$CHART_DIR/Chart.yaml")"
+
+          # Idempotent: skip if this exact chart version is already signed/published.
+          if cosign tree "ghcr.io/${OWNER_LC}/charts/${NAME}:${VERSION}" 2>/dev/null | grep -qi signature; then
+            echo "Chart ${NAME}:${VERSION} already signed in OCI — skipping."
+            exit 0
+          fi
+
+          helm package "$CHART_DIR" --destination /tmp/chart-pkg
+          PUSH_OUT="$(helm push "/tmp/chart-pkg/${NAME}-${VERSION}.tgz" "$OCI_REPO" 2>&1 | tee /dev/stderr)"
+          DIGEST="$(echo "$PUSH_OUT" | awk '/Digest:/{print $2; exit}')"
+          echo "Pushed ${NAME}:${VERSION} @ ${DIGEST}"
+
+          cosign sign --yes "ghcr.io/${OWNER_LC}/charts/${NAME}@${DIGEST}"
+          echo "Cosign keyless signature published for ${NAME}:${VERSION}"
