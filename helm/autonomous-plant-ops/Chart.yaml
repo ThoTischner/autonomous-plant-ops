@@ -2,8 +2,8 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 type: application
-version: 0.2.8
-appVersion: "1.0.8"
+version: 0.2.9
+appVersion: "1.0.9"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
 sources:
@@ -29,19 +29,21 @@ annotations:
   artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/images: |
     - name: sensor-simulator
-      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.8
+      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.9
     - name: llm-agent
-      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.8
+      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.9
     - name: orchestrator
-      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.8
+      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.9
     - name: dashboard-api
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.8
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.9
     - name: dashboard-frontend
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.8
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.9
   artifacthub.io/changes: |
     - kind: security
-      description: "Code Scanning vollständig auf 0: CodeQL 0; Trivy DS-0002 behoben — dashboard-frontend deklariert USER 65532"
+      description: "CVE-Reduktion: Basis-Images (Chainguard/Wolfi + nginx) auf aktuelle Digests neu gepinnt — eliminiert akkumulierte OS-Paket-CVEs"
     - kind: security
-      description: "Strukturierte .trivyignore.yaml (path-skopiert) + trivyignores in der Security-CI; DS-0002 nur für ephemere CI-Test-Images ausgenommen"
+      description: "starlette 0.49.1 -> 1.3.1 — behebt CVE-2026-54283/54282/48818/48817/48710 in allen Python-Services"
     - kind: security
-      description: "Basis: 0-CVE Chainguard/Wolfi-Images, gehärteter SecurityContext, Resource-Limits, Digest-Pinning, CI Trivy/CodeQL/SBOM/Dependabot"
+      description: "Chart als OCI-Artefakt (ghcr.io) veröffentlicht und keyless mit cosign signiert (Sigstore/GitHub OIDC) — ArtifactHub Signed-Badge"
+    - kind: security
+      description: "ArtifactHub-Ownership wiederhergestellt (owners.email) — Voraussetzung für Verified-Publisher/Official-Status"
