@@ -2,7 +2,7 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: KI-gestuetzte autonome Ueberwachung industrieller Anlagen — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend und optional Ollama.
 type: application
-version: 0.2.9
+version: 0.2.10
 appVersion: "1.0.9"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
@@ -39,6 +39,8 @@ annotations:
     - name: dashboard-frontend
       image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.9
   artifacthub.io/changes: |
+    - kind: changed
+      description: "Chart-Re-Release, damit ArtifactHub das OCI-Repo neu verarbeitet und das :artifacthub.io-Metadaten-Artefakt einliest (Verified Publisher). appVersion/Images unverändert (1.0.9)"
     - kind: security
       description: "CVE-Reduktion: Basis-Images (Chainguard/Wolfi + nginx) auf aktuelle Digests neu gepinnt — eliminiert akkumulierte OS-Paket-CVEs"
     - kind: security
