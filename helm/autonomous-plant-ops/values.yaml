@@ -1,187 +1,187 @@
 # Default values for autonomous-plant-ops.
 
 image:
-  # -- Registry-Präfix inkl. abschließendem Slash. Leer (`""`) für lokale Builds.
+  # -- Registry prefix including the trailing slash. Empty (`""`) for local builds.
   registry: "ghcr.io/thotischner/"
-  # -- Image-Tag. Leer = gepinnt auf `Chart.AppVersion` (empfohlen, reproduzierbar). Für Dev z. B. `main`.
+  # -- Image tag. Empty = pinned to `Chart.AppVersion` (recommended, reproducible). For dev e.g. `main`.
   tag: ""
   # -- Image pull policy.
   pullPolicy: IfNotPresent
 
-# -- Pull-Secrets für private Registries.
+# -- Pull secrets for private registries.
 imagePullSecrets: []
 
-# -- Anwendungs-Services. Die Keys werden 1:1 als Kubernetes-Service-Namen verwendet (nicht umbenennen — Inter-Service-URLs sind darauf angewiesen).
-# @default -- siehe Felder unten
+# -- Application services. The keys are used verbatim as Kubernetes service names (do not rename — inter-service URLs depend on them).
+# @default -- see fields below
 services:
   sensor-simulator:
-    # -- Image-Repository (wird mit `image.registry` und Tag kombiniert).
+    # -- Image repository (combined with `image.registry` and tag).
     image: autonomous-plant-ops/sensor-simulator
-    # -- Replica-Anzahl.
+    # -- Replica count.
     replicas: 1
-    # -- Container-/Service-Port.
+    # -- Container/service port.
     port: 8001
-    # -- HTTP-Pfad für Readiness/Liveness-Probe.
+    # -- HTTP path for the readiness/liveness probe.
     healthPath: /health
-    # -- Umgebungsvariablen.
+    # -- Environment variables.
     env:
       EQUIPMENT_FILE: /data/equipment.json
-    # -- Persistente Equipment-Definition (PVC). `enabled: false` = ephemer.
+    # -- Persistent equipment definition (PVC). `enabled: false` = ephemeral.
     persistence:
       enabled: true
       size: 1Gi
       mountPath: /data
       storageClass: ""
-    # -- Ressourcen-Requests/Limits.
+    # -- Resource requests/limits.
     resources: {}
 
   llm-agent:
-    # -- Image-Repository.
+    # -- Image repository.
     image: autonomous-plant-ops/llm-agent
-    # -- Replica-Anzahl.
+    # -- Replica count.
     replicas: 1
-    # -- Container-/Service-Port.
+    # -- Container/service port.
     port: 8002
-    # -- HTTP-Pfad für Probes.
+    # -- HTTP path for the probes.
     healthPath: /health
-    # -- Zusätzliche Umgebungsvariablen. `OLLAMA_HOST` wird automatisch aus `.ollama` gesetzt.
+    # -- Additional environment variables. `OLLAMA_HOST` is set automatically from `.ollama`.
     env:
       OLLAMA_MODEL: "llama3.2:3b"
-    # -- Ressourcen-Requests/Limits.
+    # -- Resource requests/limits.
     resources: {}
 
   orchestrator:
-    # -- Image-Repository.
+    # -- Image repository.
     image: autonomous-plant-ops/orchestrator
-    # -- Replica-Anzahl. Muss `1` bleiben (sonst doppelte Szenario-Trigger).
+    # -- Replica count. Must stay `1` (otherwise duplicate scenario triggers).
     replicas: 1
-    # -- `false` = kein Kubernetes-Service/Port (reiner Loop-Container).
+    # -- `false` = no Kubernetes service/port (pure loop container).
     service: false
-    # -- Umgebungsvariablen des Monitoring-Loops.
+    # -- Environment variables of the monitoring loop.
     env:
       SENSOR_URL: "http://sensor-simulator:8001"
       AGENT_URL: "http://llm-agent:8002"
       DASHBOARD_URL: "http://dashboard-api:8003"
       CYCLE_INTERVAL: "12"
       SCENARIO_CHANCE: "0.08"
-    # -- Ressourcen-Requests/Limits.
+    # -- Resource requests/limits.
     resources: {}
 
   dashboard-api:
-    # -- Image-Repository.
+    # -- Image repository.
     image: autonomous-plant-ops/dashboard-api
-    # -- Replica-Anzahl.
+    # -- Replica count.
     replicas: 1
-    # -- Container-/Service-Port.
+    # -- Container/service port.
     port: 8003
-    # -- HTTP-Pfad für Probes.
+    # -- HTTP path for the probes.
     healthPath: /health
-    # -- Ressourcen-Requests/Limits.
+    # -- Resource requests/limits.
     resources: {}
 
   dashboard-frontend:
-    # -- Image-Repository (Chainguard/Wolfi-nginx, nonroot; proxyt `/api/` zur dashboard-api).
+    # -- Image repository (Chainguard/Wolfi nginx, nonroot; proxies `/api/` to the dashboard-api).
     image: autonomous-plant-ops/dashboard-frontend
-    # -- Replica-Anzahl.
+    # -- Replica count.
     replicas: 1
-    # -- Container-/Service-Port (nonroot-nginx -> unprivilegierter Port 8080).
+    # -- Container/service port (nonroot nginx -> unprivileged port 8080).
     port: 8080
-    # -- nginx braucht beschreibbare Laufzeit-Pfade -> kein read-only Root.
+    # -- nginx needs writable runtime paths -> no read-only root.
     readOnlyRootFilesystem: false
-    # -- Ressourcen-Requests/Limits.
+    # -- Resource requests/limits.
     resources: {}
 
 ollama:
-  # -- Betriebsmodus: `external` (externer Endpoint) oder `in-cluster` (Ollama im Cluster).
+  # -- Operating mode: `external` (external endpoint) or `in-cluster` (Ollama inside the cluster).
   mode: external
 
   external:
-    # -- Voll qualifizierte URL des externen Ollama-Servers (nur bei `mode: external`).
+    # -- Fully qualified URL of the external Ollama server (only for `mode: external`).
     host: "http://host.docker.internal:11434"
 
   inCluster:
-    # -- Ollama-Image (nur bei `mode: in-cluster`).
+    # -- Ollama image (only for `mode: in-cluster`).
     image: ollama/ollama:latest
     # -- Image pull policy.
     pullPolicy: IfNotPresent
-    # -- Service-Port.
+    # -- Service port.
     port: 11434
-    # -- Modell (muss nach Deploy einmalig gepullt werden, siehe NOTES).
+    # -- Model (must be pulled once after deploy, see NOTES).
     model: "llama3.2:3b"
-    # -- Ressourcen-Requests/Limits.
+    # -- Resource requests/limits.
     resources: {}
     persistence:
-      # -- Persistente Modell-Ablage via PVC.
+      # -- Persistent model storage via PVC.
       enabled: true
-      # -- PVC-Größe.
+      # -- PVC size.
       size: 20Gi
-      # -- StorageClass (leer = Default).
+      # -- StorageClass (empty = default).
       storageClass: ""
     gpu:
-      # -- GPU für Ollama aktivieren.
+      # -- Enable GPU for Ollama.
       enabled: false
-      # -- GPU-Ressourcenname.
+      # -- GPU resource name.
       resourceName: "nvidia.com/gpu"
-      # -- Anzahl GPUs.
+      # -- Number of GPUs.
       count: 1
-      # -- NodeSelector für GPU-Nodes.
+      # -- NodeSelector for GPU nodes.
       nodeSelector: {}
-      # -- Tolerations für GPU-Nodes.
+      # -- Tolerations for GPU nodes.
       tolerations: []
 
-# -- Exposure des nutzerseitigen Einstiegspunkts (dashboard-frontend). Interne
-# Services bleiben immer ClusterIP. Frei mit `ingress` kombinierbar.
+# -- Exposure of the user-facing entry point (dashboard-frontend). Internal
+# services always stay ClusterIP. Freely combinable with `ingress`.
 frontend:
   service:
-    # -- Service-Typ: `ClusterIP` | `NodePort` | `LoadBalancer`.
+    # -- Service type: `ClusterIP` | `NodePort` | `LoadBalancer`.
     type: ClusterIP
-    # -- Fester NodePort (nur `type: NodePort`; leer = automatisch 30000–32767).
+    # -- Fixed NodePort (only `type: NodePort`; empty = automatic 30000–32767).
     nodePort: ""
-    # -- Gewünschte LoadBalancer-IP (nur `type: LoadBalancer`, optional).
+    # -- Desired LoadBalancer IP (only `type: LoadBalancer`, optional).
     loadBalancerIP: ""
-    # -- Zusätzliche Service-Annotations (z. B. Cloud-LB-Tuning).
+    # -- Additional service annotations (e.g. cloud LB tuning).
     annotations: {}
 
 ingress:
-  # -- Ingress aktivieren (unabhängig vom `frontend.service.type`).
+  # -- Enable ingress (independent of `frontend.service.type`).
   enabled: true
-  # -- IngressClass-Name: `nginx` | `traefik` | eigener Name | `""` (Default-Class).
+  # -- IngressClass name: `nginx` | `traefik` | custom name | `""` (default class).
   className: nginx
-  # -- Annotation-Preset passend zum Controller: `nginx` | `traefik` | `none`. Hält den SSE-Stream `/events/stream` offen (kein Buffering, lange Timeouts).
+  # -- Annotation preset matching the controller: `nginx` | `traefik` | `none`. Keeps the SSE stream `/events/stream` open (no buffering, long timeouts).
   controller: nginx
   # -- Hostname.
   host: plant-ops.local
-  # -- HTTP-Pfad.
+  # -- HTTP path.
   path: /
   # -- pathType: `Prefix` | `Exact` | `ImplementationSpecific`.
   pathType: Prefix
-  # -- Zusätzliche Annotations (werden über das Controller-Preset gemerged, können es überschreiben).
+  # -- Additional annotations (merged over the controller preset, can override it).
   annotations: {}
   tls:
-    # -- TLS aktivieren.
+    # -- Enable TLS.
     enabled: false
-    # -- Name des TLS-Secrets (leer = `<Release>-tls`).
+    # -- Name of the TLS secret (empty = `<Release>-tls`).
     secretName: ""
-  # -- cert-manager-Integration: setzt die Issuer-Annotation und aktiviert TLS automatisch.
+  # -- cert-manager integration: sets the issuer annotation and enables TLS automatically.
   certManager:
-    # -- cert-manager-Ausstellung aktivieren.
+    # -- Enable cert-manager issuance.
     enabled: false
-    # -- Name des Issuers/ClusterIssuers.
+    # -- Name of the Issuer/ClusterIssuer.
     issuerName: ""
-    # -- Issuer-Art: `ClusterIssuer` | `Issuer`.
+    # -- Issuer kind: `ClusterIssuer` | `Issuer`.
     issuerKind: ClusterIssuer
 
-# -- Pod-Annotations (alle Deployments).
+# -- Pod annotations (all deployments).
 podAnnotations: {}
-# -- NodeSelector (alle Deployments).
+# -- NodeSelector (all deployments).
 nodeSelector: {}
-# -- Tolerations (alle Deployments).
+# -- Tolerations (all deployments).
 tolerations: []
-# -- Affinity (alle Deployments).
+# -- Affinity (all deployments).
 affinity: {}
 
-# -- Default-Ressourcen (greifen, wenn ein Service keine eigenen `resources`
-# setzt). Setzt requests UND limits -> klärt die KSV-Resource-Checks.
+# -- Default resources (apply when a service sets no own `resources`). Sets
+# requests AND limits -> clears the KSV resource checks.
 defaultResources:
   requests:
     cpu: 50m
@@ -190,18 +190,18 @@ defaultResources:
     cpu: "1"
     memory: 512Mi
 
-# -- Gehärteter SecurityContext für alle Deployments (passt zu den nonroot
-# Wolfi/Chainguard-Images: runAsNonRoot, Caps drop ALL, no privilege
-# escalation, seccomp RuntimeDefault). Schreibzugriff nur über ein
-# /tmp-emptyDir und persistente Volumes.
+# -- Hardened SecurityContext for all deployments (matches the nonroot
+# Wolfi/Chainguard images: runAsNonRoot, caps drop ALL, no privilege
+# escalation, seccomp RuntimeDefault). Write access only via a
+# /tmp emptyDir and persistent volumes.
 securityContext:
-  # -- SecurityContext aktivieren.
+  # -- Enable SecurityContext.
   enabled: true
-  # -- UID (nonroot, entspricht den Images).
+  # -- UID (nonroot, matches the images).
   runAsUser: 65532
   # -- GID.
   runAsGroup: 65532
-  # -- fsGroup für gemountete Volumes.
+  # -- fsGroup for mounted volumes.
   fsGroup: 65532
-  # -- Root-Dateisystem read-only (global). Pro Service via `services.<name>.readOnlyRootFilesystem` überschreibbar.
+  # -- Read-only root filesystem (global). Overridable per service via `services.<name>.readOnlyRootFilesystem`.
   readOnlyRootFilesystem: true
