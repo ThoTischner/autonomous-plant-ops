@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse
@@ -21,7 +20,7 @@ async def create_event(payload: dict):
 @router.get("")
 async def list_events(
     limit: int = 100,
-    event_type: Optional[EventType] = None,
+    event_type: EventType | None = None,
 ):
     if event_type is not None:
         return store.get_by_type(event_type, limit=limit)
@@ -43,7 +42,7 @@ async def stream_events(request: Request):
                         "event": event.event_type.value,
                         "data": event.model_dump_json(),
                     }
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Send keepalive comment
                     yield {"comment": "keepalive"}
         finally:

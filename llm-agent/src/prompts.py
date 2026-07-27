@@ -1,4 +1,3 @@
-from typing import Optional
 
 # Cooldown before a safe restart should be recommended (seconds).
 RECOVERY_COOLDOWN = 30
@@ -66,7 +65,7 @@ ANTWORTE GENAU MIT DIESER JSON-STRUKTUR:
 
 Gültige Aktionen: increase_cooling, reduce_speed, shutdown_equipment, restart_equipment, adjust_setpoint, alert_operator, no_action.
 
-Sind ALLE Werte normal und nichts wiederanzufahren, gib leere anomalies- und actions-Listen zurück.""".replace(  # noqa: E501
+Sind ALLE Werte normal und nichts wiederanzufahren, gib leere anomalies- und actions-Listen zurück.""".replace(
     "COOLDOWN_SECONDS", str(RECOVERY_COOLDOWN)
 )
 
@@ -95,9 +94,9 @@ def is_default_prompt() -> bool:
 
 def build_user_prompt(
     sensors: list[dict],
-    history: Optional[list[dict]] = None,
-    recent_actions: Optional[list[dict]] = None,
-    ranges_text: Optional[str] = None,
+    history: list[dict] | None = None,
+    recent_actions: list[dict] | None = None,
+    ranges_text: str | None = None,
 ) -> str:
     parts = []
 

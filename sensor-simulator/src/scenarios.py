@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Callable, Coroutine
+from collections.abc import Callable, Coroutine
 
 from .simulator import simulator
 

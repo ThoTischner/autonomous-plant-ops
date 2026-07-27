@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import quote
 
 import httpx
@@ -31,7 +31,7 @@ def _safe_id(eid: str) -> str:
 
 class ScenarioBody(BaseModel):
     scenario: str
-    equipment_id: Optional[str] = None
+    equipment_id: str | None = None
 
 
 class PromptBody(BaseModel):

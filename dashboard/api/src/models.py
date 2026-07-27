@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ class EventType(str, Enum):
 class Event(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     event_type: EventType
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     data: dict[str, Any] = Field(default_factory=dict)
-    equipment_id: Optional[str] = None
-    severity: Optional[str] = None
+    equipment_id: str | None = None
+    severity: str | None = None

@@ -1,5 +1,5 @@
 from collections import deque
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 class RollingContext:
@@ -10,11 +10,11 @@ class RollingContext:
         self._actions: deque[dict] = deque(maxlen=60)
 
     def add_reading(self, data: dict) -> None:
-        entry = {**data, "recorded_at": datetime.utcnow().isoformat()}
+        entry = {**data, "recorded_at": datetime.now(UTC).isoformat()}
         self._readings.append(entry)
 
     def add_action(self, action: dict) -> None:
-        entry = {**action, "executed_at": datetime.utcnow().isoformat()}
+        entry = {**action, "executed_at": datetime.now(UTC).isoformat()}
         self._actions.append(entry)
 
     def get_history_summary(self) -> list[dict]:

@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -11,18 +10,18 @@ class SensorData(BaseModel):
     temperature: float
     pressure: float
     vibration: float
-    flow_rate: Optional[float] = None
+    flow_rate: float | None = None
     status: str
-    shutdown_seconds: Optional[float] = None
-    latent_status: Optional[str] = None
-    safe_to_restart: Optional[bool] = None
-    ramping_up: Optional[bool] = None
+    shutdown_seconds: float | None = None
+    latent_status: str | None = None
+    safe_to_restart: bool | None = None
+    ramping_up: bool | None = None
 
 
 class AnalysisRequest(BaseModel):
     sensors: list[SensorData]
-    history: Optional[list[dict]] = None
-    recent_actions: Optional[list[dict]] = None
+    history: list[dict] | None = None
+    recent_actions: list[dict] | None = None
 
 
 class Severity(str, Enum):

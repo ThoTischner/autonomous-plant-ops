@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,7 +19,7 @@ class EquipmentDef(BaseModel):
     temperature: RangeModel
     pressure: RangeModel
     vibration: RangeModel
-    flow_rate: Optional[RangeModel] = None
+    flow_rate: RangeModel | None = None
 
 
 class EquipmentStatus(str, Enum):
@@ -37,19 +36,19 @@ class SensorReading(BaseModel):
     temperature: float
     pressure: float
     vibration: float
-    flow_rate: Optional[float] = None
+    flow_rate: float | None = None
     status: EquipmentStatus = EquipmentStatus.NORMAL
     # Seconds since the equipment was shut down (None if running). Lets the
     # agent decide when a safe restart is appropriate.
-    shutdown_seconds: Optional[float] = None
+    shutdown_seconds: float | None = None
     # While shut down: what the status WOULD be on restart (latent), and
     # whether it is safe to restart now (latent values all uncritical).
-    latent_status: Optional[EquipmentStatus] = None
-    safe_to_restart: Optional[bool] = None
+    latent_status: EquipmentStatus | None = None
+    safe_to_restart: bool | None = None
     # True while a freshly restarted unit is still ramping back to nominal
     # load/cooling. Its values (esp. a low temperature) are an expected
     # startup transient and must NOT trigger another shutdown.
-    ramping_up: Optional[bool] = None
+    ramping_up: bool | None = None
 
 
 class ActionType(str, Enum):

@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from ollama import AsyncClient
 
@@ -160,14 +160,14 @@ class AnalysisAgent:
             for a in parsed.get("anomalies", []):
                 try:
                     anomalies.append(_normalize_anomaly(a))
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 — tolerate any malformed LLM anomaly
                     logger.warning("Skipping malformed anomaly %s: %s", a, e)
 
             actions = []
             for act in parsed.get("actions", []):
                 try:
                     actions.append(_normalize_action(act))
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 — tolerate any malformed LLM action
                     logger.warning("Skipping malformed action %s: %s", act, e)
 
             # Hard guard against the shutdown↔shutdown oscillation:
@@ -244,15 +244,15 @@ class AnalysisAgent:
                 anomalies=anomalies,
                 reasoning=parsed.get("reasoning", parsed.get("analysis", "")),
                 actions=actions,
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — LLM/transport errors must degrade gracefully
             logger.error("LLM analysis failed: %s", e)
             analysis = AnalysisResponse(
                 anomalies=[],
                 reasoning=f"LLM analysis error: {e}",
                 actions=[],
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
             )
 
         # Deterministic recovery runs regardless of LLM success/failure.
