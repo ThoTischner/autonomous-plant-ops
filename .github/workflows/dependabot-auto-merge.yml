@@ -1,0 +1,67 @@
+name: Dependabot auto-merge
+
+# Zero-touch remediation for stale base-image digests: when Dependabot opens a
+# base-image bump (branch dependabot/docker/*) and EVERY check for that commit
+# is green, squash-merge it. Merging to main re-triggers the Images workflow,
+# which rebuilds and re-pushes the :1.0.9 images with the patched base — so the
+# ArtifactHub security report clears itself without manual intervention.
+#
+# Scope is deliberately narrow: only docker (base-image) branches are
+# auto-merged. pip/npm/actions PRs are left for human review. Direct pushes to
+# main by maintainers are unaffected (no branch protection is imposed).
+
+on:
+  workflow_run:
+    # Re-evaluated whenever any of these finish; the last one to go green merges.
+    workflows: ["Images", "Security", "CI", "CodeQL"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/docker/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge when all checks for the commit are green
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+
+          # 1) Nothing may still be running/queued for this commit.
+          pending="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs" \
+            --paginate --jq '[.check_runs[] | select(.status != "completed")] | length')"
+          if [ "${pending}" -ne 0 ]; then
+            echo "Still ${pending} check(s) in progress for ${HEAD_SHA} — waiting."
+            exit 0
+          fi
+
+          # 2) Every completed check must have a passing conclusion.
+          bad="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs" \
+            --paginate --jq '[.check_runs[]
+              | select((.conclusion // "") as $c
+                | ($c != "success" and $c != "neutral" and $c != "skipped"))] | length')"
+          if [ "${bad}" -ne 0 ]; then
+            echo "${bad} check(s) not green for ${HEAD_SHA} — not merging."
+            exit 0
+          fi
+
+          # 3) Find the open PR for this branch and squash-merge it.
+          pr="$(gh pr list --repo "${REPO}" --head "${HEAD_BRANCH}" --state open \
+            --json number --jq '.[0].number // empty')"
+          if [ -z "${pr}" ]; then
+            echo "No open PR for ${HEAD_BRANCH}."
+            exit 0
+          fi
+
+          echo "All checks green — squash-merging PR #${pr} (${HEAD_BRANCH})."
+          gh pr merge "${pr}" --repo "${REPO}" --squash --delete-branch

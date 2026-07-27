@@ -30,6 +30,9 @@ updates:
     labels: [dependencies, javascript]
 
   # --- Container base images ---
+  # NOTE: base images MUST carry a tag next to the digest
+  # (e.g. `cgr.dev/chainguard/wolfi-base:latest@sha256:...`), otherwise
+  # Dependabot cannot resolve the tag and silently skips digest updates.
   - package-ecosystem: docker
     directories:
       - /sensor-simulator
@@ -39,6 +42,10 @@ updates:
       - /dashboard/frontend
     schedule: { interval: weekly }
     labels: [dependencies, docker]
+    # One consolidated PR per week for all base-image digest bumps.
+    groups:
+      base-images:
+        patterns: ["*"]
 
   # --- GitHub Actions ---
   - package-ecosystem: github-actions
