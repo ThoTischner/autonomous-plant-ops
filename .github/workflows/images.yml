@@ -6,6 +6,13 @@ on:
     tags: ["v*"]
   pull_request:
     branches: [main]
+  # Weekly no-cache rebuild: base packages (e.g. apk python-3.12) are installed
+  # at build time, so a fresh rebuild pulls the latest patched packages even
+  # when the pinned base digest is unchanged. Also re-tags the current release
+  # (appVersion) so the images ArtifactHub scans stay patched.
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch: {}
 
 concurrency:
   group: images-${{ github.ref }}
@@ -70,11 +77,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Read chart appVersion (for release re-tag on rebuilds)
+        id: ver
+        run: |
+          v="$(awk -F'\"' '/^appVersion:/{print $2; exit}' helm/autonomous-plant-ops/Chart.yaml)"
+          echo "appVersion=${v}" >> "$GITHUB_OUTPUT"
+
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          # On scheduled / manual rebuilds, also refresh the current release tag
+          # (appVersion) so the freshly patched image lands on the tag the Helm
+          # chart pins and ArtifactHub scans.
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -82,6 +98,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.ver.outputs.appVersion }},enable=${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
 
       - name: Build (and push on non-PR)
         uses: docker/build-push-action@v6
@@ -92,5 +109,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Release (tag), scheduled and manual rebuilds bypass the layer cache
+          # so the `apk add` step re-resolves the latest patched packages.
+          no-cache: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
