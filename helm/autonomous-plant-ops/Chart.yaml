@@ -2,7 +2,7 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: AI-powered autonomous monitoring of industrial plants — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend and optionally Ollama.
 type: application
-version: 0.2.11
+version: 0.2.12
 appVersion: "1.0.9"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
@@ -39,6 +39,8 @@ annotations:
     - name: dashboard-frontend
       image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.9
   artifacthub.io/changes: |
+    - kind: security
+      description: "Rebuilt the 1.0.9 images from current Chainguard/Wolfi packages (python-3.12 r8->r10, glibc, libcrypt1) — now 0 CVE (all severities). Chart re-release forces ArtifactHub to re-scan the patched images"
     - kind: changed
       description: "Chart README, description and values documentation translated to English (ArtifactHub Official-status requirement). appVersion/images unchanged (1.0.9)"
     - kind: security
