@@ -3,8 +3,10 @@ name: Dependabot auto-merge
 # Zero-touch remediation for stale base-image digests: when Dependabot opens a
 # base-image bump (branch dependabot/docker/*) and EVERY check for that commit
 # is green, squash-merge it. Merging to main re-triggers the Images workflow,
-# which rebuilds and re-pushes the :1.0.9 images with the patched base — so the
-# ArtifactHub security report clears itself without manual intervention.
+# which rebuilds and re-pushes the :main / :latest tags with the patched base.
+# The weekly scheduled Images rebuild additionally re-tags the current
+# appVersion, which is what the chart pins and ArtifactHub scans — so the
+# security report clears itself without manual intervention.
 #
 # Scope is deliberately narrow: only docker (base-image) branches are
 # auto-merged. pip/npm/actions PRs are left for human review. Direct pushes to

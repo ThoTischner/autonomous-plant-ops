@@ -46,6 +46,17 @@ updates:
     groups:
       base-images:
         patterns: ["*"]
+    ignore:
+      # The python build stage is hard-coupled to the runtime image: the
+      # final stage does `apk add python-3.12` and sets
+      # PYTHONPATH=/usr/local/lib/python3.12/site-packages, so a build-stage
+      # major/minor bump silently produces an image whose wheels no longer
+      # match the interpreter. Digest updates (security patches) still flow;
+      # a real interpreter upgrade has to change both stages together.
+      - dependency-name: "python"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
 
   # --- GitHub Actions ---
   - package-ecosystem: github-actions
