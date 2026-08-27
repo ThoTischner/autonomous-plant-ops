@@ -2,8 +2,8 @@ apiVersion: v2
 name: autonomous-plant-ops
 description: AI-powered autonomous monitoring of industrial plants — Sensor Simulator, LLM Agent, Orchestrator, Dashboard API/Frontend and optionally Ollama.
 type: application
-version: 0.2.12
-appVersion: "1.0.9"
+version: 0.3.0
+appVersion: "1.1.0"
 icon: https://raw.githubusercontent.com/ThoTischner/autonomous-plant-ops/main/docs/icon.png
 home: https://github.com/ThoTischner/autonomous-plant-ops
 sources:
@@ -29,16 +29,24 @@ annotations:
   artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/images: |
     - name: sensor-simulator
-      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.0.9
+      image: ghcr.io/thotischner/autonomous-plant-ops/sensor-simulator:1.1.0
     - name: llm-agent
-      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.0.9
+      image: ghcr.io/thotischner/autonomous-plant-ops/llm-agent:1.1.0
     - name: orchestrator
-      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.0.9
+      image: ghcr.io/thotischner/autonomous-plant-ops/orchestrator:1.1.0
     - name: dashboard-api
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.0.9
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-api:1.1.0
     - name: dashboard-frontend
-      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.0.9
+      image: ghcr.io/thotischner/autonomous-plant-ops/dashboard-frontend:1.1.0
   artifacthub.io/changes: |
+    - kind: security
+      description: "Base images re-pinned to current digests (Chainguard/Wolfi + nginx) — fixes CVE-2026-14456 (openssl libcrypto3/libssl3) and CVE-2026-38754 (busybox). All 5 runtime images verified 0 CVE (all severities)"
+    - kind: security
+      description: "nanoid 3.3.16 -> 3.3.18 fixes GHSA-2v37-7h3g-55p8 (high) and unblocks the npm-audit gate, which had been failing on every scheduled Security run; frontend build stage moved to node 26-alpine"
+    - kind: security
+      description: "Python dependencies updated across all services: fastapi 0.136.1 -> 0.141.1, starlette 1.3.1 -> 1.6.0, uvicorn 0.34.0 -> 0.52.4, pydantic 2.10.4 -> 2.13.4, numpy 2.2.1 -> 2.5.2, ollama 0.4.5 -> 0.6.2, sse-starlette 2.2.1 -> 3.4.8, httpx 0.27.2 -> 0.28.1"
+    - kind: changed
+      description: "CI actions bumped to current majors (checkout/setup-node/upload-artifact v7, build-push v7, buildx/qemu v4, login v4, metadata v6, codeql-action v4) — removes the Node 20 runner deprecation warnings"
     - kind: security
       description: "Rebuilt the 1.0.9 images from current Chainguard/Wolfi packages (python-3.12 r8->r10, glibc, libcrypt1) — now 0 CVE (all severities). Chart re-release forces ArtifactHub to re-scan the patched images"
     - kind: changed
