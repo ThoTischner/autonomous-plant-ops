@@ -1,4 +1,4 @@
-FROM node:26-alpine@sha256:bff25b16ab13b4789c8d78489c249239fb74c85319cc90fc6122c40123894f1e AS build
+FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS build
 WORKDIR /app
 # Use the lockfile so the pinned/overridden (secure) deps are honored.
 COPY package.json package-lock.json ./
@@ -8,7 +8,7 @@ RUN npm run build
 
 # Chainguard/Wolfi nginx — distroless, nonroot, continuously rebuilt: ~0 CVEs.
 # Serves on unprivileged port 8080 (see nginx.conf).
-FROM cgr.dev/chainguard/nginx:latest@sha256:38e202d0304b7bf0235ade6ef622c8bf0242fdd5c674bf301ca5cbbb378ff7df
+FROM cgr.dev/chainguard/nginx:latest@sha256:8a4981bd9d32dcf4406bbbac259565962f15c5c3cc235bf9df98fe2e5a9cea19
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Chainguard nginx already runs as this nonroot uid; declare it explicitly.
