@@ -7,7 +7,7 @@ COPY src/ src/
 
 # --- runtime: Chainguard/Wolfi base (~0 CVE, continuously patched),
 #     pinned python-3.12, nonroot ---
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:fd536778d12e19bff29cfcf73265a14f585152a49d7f7cd6739ebe48dff01e26
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:05d24163df148be377275af8374c16523a1dc7e19bf4f1c689784791553c5e45
 RUN apk add --no-cache python-3.12 && ln -sf /usr/bin/python3.12 /usr/bin/python3
 WORKDIR /app
 ENV PYTHONPATH=/usr/local/lib/python3.12/site-packages \
