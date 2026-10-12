@@ -297,7 +297,7 @@ export default function ControlBar() {
               spellCheck={false}
               className="w-full h-72 text-xs font-mono p-3 rounded-lg bg-plant-bg
                          border border-plant-border text-gray-300
-                         focus:outline-none focus:border-plant-accent resize-y"
+                         focus:outline-hidden focus:border-plant-accent resize-y"
             />
             <div className="flex gap-2 mt-3">
               <button

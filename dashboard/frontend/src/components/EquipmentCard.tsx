@@ -199,7 +199,7 @@ export default function EquipmentCard({ equipmentId, name, status, reading, def 
             <EquipmentIcon type={type} status={status} />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-white leading-tight break-words">
+            <div className="text-sm font-semibold text-white leading-tight wrap-break-word">
               {name || equipmentId}
             </div>
             <div className="text-[10px] text-gray-500 font-mono break-all">{equipmentId}</div>

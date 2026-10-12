@@ -113,7 +113,7 @@ export default function ActionLog({ actions }: Props) {
                   <td className="px-3 py-1.5">
                     {action.urgency && (
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${urgencyBadge(action.urgency)}`}
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm border ${urgencyBadge(action.urgency)}`}
                       >
                         {action.urgency.toUpperCase()}
                       </span>
