@@ -57,7 +57,7 @@ export default function AgentFeed({ analyses }: Props) {
                 className="bg-plant-card border border-plant-border rounded-lg p-3"
               >
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${severityDotColor(analysis)}`} />
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${severityDotColor(analysis)}`} />
                   <span className="text-[10px] text-gray-500 font-mono">
                     {formatTimestamp(analysis.timestamp)}
                   </span>
@@ -74,7 +74,7 @@ export default function AgentFeed({ analyses }: Props) {
                     {analysis.anomalies.map((anomaly, aIdx) => (
                       <div
                         key={aIdx}
-                        className="flex items-center gap-2 text-[10px] bg-plant-bg/50 rounded px-2 py-1"
+                        className="flex items-center gap-2 text-[10px] bg-plant-bg/50 rounded-sm px-2 py-1"
                       >
                         <span
                           className={`font-bold ${

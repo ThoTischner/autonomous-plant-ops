@@ -171,7 +171,7 @@ export default function EquipmentModal({ open, onClose }: Props) {
             setForm((p) => ({ ...p, [key]: { ...p[key], [fld]: e.target.value } }))
           }
           className="w-20 text-xs px-2 py-1 rounded bg-plant-bg border border-plant-border
-                     text-gray-200 focus:outline-none focus:border-plant-accent"
+                     text-gray-200 focus:outline-hidden focus:border-plant-accent"
         />
       ))}
     </div>
@@ -271,7 +271,7 @@ export default function EquipmentModal({ open, onClose }: Props) {
                 }
                 className="flex-1 text-xs px-2 py-1.5 rounded bg-plant-bg border
                            border-plant-border text-gray-200 disabled:opacity-60
-                           focus:outline-none focus:border-plant-accent"
+                           focus:outline-hidden focus:border-plant-accent"
               />
               <input
                 value={form.name}
@@ -279,7 +279,7 @@ export default function EquipmentModal({ open, onClose }: Props) {
                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                 className="flex-1 text-xs px-2 py-1.5 rounded bg-plant-bg border
                            border-plant-border text-gray-200
-                           focus:outline-none focus:border-plant-accent"
+                           focus:outline-hidden focus:border-plant-accent"
               />
               <select
                 value={form.etype}

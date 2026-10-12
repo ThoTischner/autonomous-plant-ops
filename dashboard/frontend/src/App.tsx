@@ -83,7 +83,7 @@ function App() {
       </div>
 
       {/* Row 3 — right: AI agent feed (primary focus) */}
-      <div className="overflow-y-auto border-l-2 border-plant-accent/40 bg-plant-accent/[0.03]">
+      <div className="overflow-y-auto border-l-2 border-plant-accent/40 bg-plant-accent/3">
         <AgentFeed analyses={analyses} />
       </div>
 
