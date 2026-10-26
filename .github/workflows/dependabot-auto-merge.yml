@@ -12,8 +12,10 @@ name: Dependabot auto-merge
 # auto-merged. pip/npm/actions PRs are left for human review. Direct pushes to
 # main by maintainers are unaffected (no branch protection is imposed).
 
+# workflow_run is safe here: no checkout, no untrusted code runs; all
+# event data goes through env vars and the job is gated to dependabot/docker/*.
 on:
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     # Re-evaluated whenever any of these finish; the last one to go green merges.
     workflows: ["Images", "Security", "CI", "CodeQL"]
     types: [completed]

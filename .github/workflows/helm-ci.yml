@@ -12,16 +12,20 @@ concurrency:
   group: helm-ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: "Chart lint (chart-testing)"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: azure/setup-helm@v4
-      - uses: helm/chart-testing-action@v2
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+      - uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
       - name: helm lint
         run: helm lint helm/autonomous-plant-ops
       - name: ct lint
@@ -38,7 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Build service images (local, tag ci)
         run: |
@@ -51,7 +57,7 @@ jobs:
           build orchestrator       orchestrator
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
         with:
           config: helm/kind-config.yaml
 
@@ -67,7 +73,7 @@ jobs:
           kubectl -n ingress-nginx wait --for=condition=ready pod \
             --selector=app.kubernetes.io/component=controller --timeout=180s
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
 
       - name: helm install
         run: |

@@ -100,8 +100,8 @@ ollama:
     host: "http://host.docker.internal:11434"
 
   inCluster:
-    # -- Ollama image (only for `mode: in-cluster`).
-    image: ollama/ollama:latest
+    # -- Ollama image (only for `mode: in-cluster`). Pinned by version + digest; kept current by Dependabot and scanned weekly by Trivy.
+    image: ollama/ollama:0.40.11@sha256:dea72d1e22270fe095b68fdf756d2b489d615643c5a2eaebbc5f569181e322d8
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Service port.

@@ -21,10 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
+          package-manager-cache: false
       - name: npm audit (high)
         working-directory: ./dashboard/frontend
         run: npm audit --audit-level=high
@@ -41,7 +44,9 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -57,7 +62,7 @@ jobs:
 
       - name: Upload Trivy FS SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-fs
@@ -92,10 +97,12 @@ jobs:
           - { name: dashboard-api,      context: dashboard/api }
           - { name: dashboard-frontend, context: dashboard/frontend }
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Build image (no push)
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ${{ matrix.context }}
           push: false
@@ -115,7 +122,7 @@ jobs:
 
       - name: Upload Trivy image SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: trivy-${{ matrix.name }}.sarif
           category: trivy-image-${{ matrix.name }}
@@ -130,7 +137,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom-${{ matrix.name }}
           path: sbom-${{ matrix.name }}.spdx.json
@@ -145,4 +152,58 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           trivyignores: .trivyignore.yaml
+          exit-code: "1"
+
+  # Third-party Ollama image used by the chart in `ollama.mode: in-cluster`.
+  # The ref is read from values.yaml so scan and chart can never drift apart
+  # (Dependabot's helm ecosystem bumps the pin there). Trivy pulls it straight
+  # from the registry; the image is ~3.4 GB (CUDA libs), hence the long timeout.
+  ollama-scan:
+    name: "Trivy — ollama (third-party)"
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read Ollama image ref from values.yaml
+        id: ref
+        run: |
+          ref="$(sed -nE 's/^    image: (ollama\/ollama:.+)$/\1/p' helm/autonomous-plant-ops/values.yaml)"
+          test -n "${ref}" || { echo "::error::ollama.inCluster.image not found in values.yaml"; exit 1; }
+          echo "image=${ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ steps.ref.outputs.image }}
+          format: sarif
+          output: trivy-ollama.sarif
+          severity: HIGH,CRITICAL
+          timeout: 30m
+          exit-code: "0"
+
+      - name: Upload Trivy image SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: trivy-ollama.sarif
+          category: trivy-image-ollama
+
+      # Reuses the layer cache from the scan above, so this second pass is fast.
+      - name: Trivy image gate (fixable vulns)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ steps.ref.outputs.image }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          timeout: 30m
           exit-code: "1"
