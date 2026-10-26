@@ -6,12 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-test-sensor-simulator:
     name: "Sensor Simulator — Lint & Test"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build test image
         run: docker build -f sensor-simulator/Dockerfile.test -t sensor-simulator-test sensor-simulator/
       - name: Run linter (ruff)
@@ -25,7 +30,9 @@ jobs:
     name: "LLM Agent — Lint & Test"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build test image
         run: docker build -f llm-agent/Dockerfile.test -t llm-agent-test llm-agent/
       - name: Run linter (ruff)
@@ -39,7 +46,9 @@ jobs:
     name: "Dashboard API — Lint & Test"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build test image
         run: docker build -f dashboard/api/Dockerfile.test -t dashboard-api-test dashboard/api/
       - name: Run linter (ruff)
@@ -53,7 +62,9 @@ jobs:
     name: "Dashboard Frontend — Lint & Build"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build test image
         run: docker build -f dashboard/frontend/Dockerfile.test -t frontend-test dashboard/frontend/
       - name: Run TypeScript type check
@@ -68,7 +79,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint-and-test-sensor-simulator, lint-and-test-llm-agent, lint-and-test-dashboard-api, lint-and-build-frontend]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build all services
         run: docker compose build
       - name: Start services (without Ollama model)
@@ -88,7 +101,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-compose-build]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build integration test runner
         run: docker build -f tests/Dockerfile -t integration-tests tests/
       - name: Start services
@@ -108,7 +123,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-compose-build]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build E2E runner
         run: docker build -f tests/e2e/Dockerfile -t e2e-tests tests/e2e/
       - name: Start full stack

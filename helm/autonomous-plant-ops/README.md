@@ -73,7 +73,7 @@ kubectl exec deploy/ollama -- ollama pull llama3.2:3b
 | services.dashboard-frontend.resources | object | `{}` | Resource requests/limits. |
 | ollama.mode | string | `"external"` | Operating mode: `external` (external endpoint) or `in-cluster` (Ollama inside the cluster). |
 | ollama.external.host | string | `"http://host.docker.internal:11434"` | Fully qualified URL of the external Ollama server (only for `mode: external`). |
-| ollama.inCluster.image | string | `"ollama/ollama:latest"` | Ollama image (only for `mode: in-cluster`). |
+| ollama.inCluster.image | string | `"ollama/ollama:0.40.11@sha256:dea72d1e22270fe095b68fdf756d2b489d615643c5a2eaebbc5f569181e322d8"` | Ollama image (only for `mode: in-cluster`). Pinned by version + digest; kept current by Dependabot and scanned weekly by Trivy. |
 | ollama.inCluster.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | ollama.inCluster.port | int | `11434` | Service port. |
 | ollama.inCluster.model | string | `"llama3.2:3b"` | Model (must be pulled once after deploy, see NOTES). |

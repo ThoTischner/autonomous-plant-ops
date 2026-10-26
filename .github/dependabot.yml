@@ -58,6 +58,12 @@ updates:
           - "version-update:semver-major"
           - "version-update:semver-minor"
 
+  # --- Helm chart: third-party images pinned in values.yaml (ollama) ---
+  - package-ecosystem: helm
+    directory: /helm/autonomous-plant-ops
+    schedule: { interval: weekly }
+    labels: [dependencies, helm]
+
   # --- GitHub Actions ---
   - package-ecosystem: github-actions
     directory: /
