@@ -94,7 +94,7 @@ jobs:
       #     repositoryID can't be matched and the Verified-Publisher badge
       #     (prerequisite for Official) is lost. ---
       - name: Set up oras
-        uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1.2.4
+        uses: oras-project/setup-oras@005458ad77f1c8facd38a094e4af2e69e5607ff4 # v2.0.2
 
       - name: Publish ArtifactHub repo metadata to OCI (Verified Publisher)
         working-directory: helm
