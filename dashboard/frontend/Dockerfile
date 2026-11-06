@@ -8,7 +8,7 @@ RUN npm run build
 
 # Chainguard/Wolfi nginx — distroless, nonroot, continuously rebuilt: ~0 CVEs.
 # Serves on unprivileged port 8080 (see nginx.conf).
-FROM cgr.dev/chainguard/nginx:latest@sha256:16d0e55ffe62f55744d9b903d8eb57e533d0f660332a9fbb967d78b4e77c8bdb
+FROM cgr.dev/chainguard/nginx:latest@sha256:5f1056de9a9fd549e9c2a45476375a886c85c8be2b1545e6ecd1bf8fa78c88aa
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Chainguard nginx already runs as this nonroot uid; declare it explicitly.
