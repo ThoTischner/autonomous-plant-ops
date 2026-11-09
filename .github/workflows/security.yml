@@ -205,5 +205,7 @@ jobs:
           format: table
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          # Upstream-only CVEs, time-boxed via expired_at — see .trivyignore.ollama.yaml
+          trivyignores: .trivyignore.ollama.yaml
           timeout: 30m
           exit-code: "1"

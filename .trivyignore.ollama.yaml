@@ -1,0 +1,24 @@
+# Akzeptierte CVEs im Drittanbieter-Image ollama/ollama — gilt NUR fuer
+# den Gate-Schritt des Jobs `ollama-scan` in security.yml, nicht fuer die
+# 5 eigenen Laufzeit-Images (die bleiben bei 0 CVE).
+#
+# Hintergrund: Die Fixes existieren in Ubuntu bzw. golang.org/x/net, sind
+# aber noch nicht im Upstream-Image angekommen (auch 0.40.15 = latest am
+# 2026-11-09 ist betroffen). Wir koennen das Image nicht selbst patchen.
+#
+# Jeder Eintrag hat ein `expired_at` — danach schlaegt das Gate wieder an
+# und erzwingt eine Neubewertung (Bump via Dependabot oder Verlaengerung).
+# Die Findings bleiben unabhaengig davon per SARIF in Code Scanning sichtbar.
+vulnerabilities:
+  # apt / libapt-pkg: RCE via Hard-Link-Wiederverwendung beim Paket-Download.
+  # Nur ausnutzbar, wenn apt im Container Pakete laedt — der Ollama-Container
+  # fuehrt zur Laufzeit nie apt aus.
+  - id: CVE-2026-109518
+    statement: "apt is never invoked at runtime in the Ollama container; awaiting upstream rebuild"
+    expired_at: 2026-12-09
+
+  # golang.org/x/net/html: DoS durch praepariertes HTML (kein RCE/Leak).
+  # Ollama ist im Chart nur per ClusterIP erreichbar (Client: llm-agent).
+  - id: CVE-2026-78661
+    statement: "DoS only; Ollama is cluster-internal (ClusterIP) behind llm-agent; awaiting upstream x/net bump"
+    expired_at: 2026-12-09
